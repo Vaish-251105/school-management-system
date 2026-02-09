@@ -15,6 +15,9 @@ app.use('/api/auth', authRoutes);
 const testRoutes = require('./src/routes/testRoutes');
 app.use('/api/test', testRoutes);
 
+const studentRoutes = require('./src/routes/studentRoutes');
+app.use('/api/students', studentRoutes);
+
 
 // Test route
 app.get('/', (req, res) => {
