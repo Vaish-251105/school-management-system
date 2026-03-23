@@ -1,9 +1,10 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import generateToken from '../utils/generateToken.js';
 
 // REGISTER
-exports.register = async (req, res) => {
+export const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -23,40 +24,57 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       message: 'User registered successfully',
-      user
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 // LOGIN
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please enter all fields" });
+    }
+
+    console.log(`LOGIN ATTEMPT: Email - "${email}", Password - "${password}"`);
     const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      console.log('USER NOT FOUND:', email);
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log('PASSWORD MISMATCH for:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    console.log('LOGIN SUCCESS:', email);
+    const token = generateToken(user._id);
 
     res.json({
-      message: 'Login successful',
-      token,
-      user
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: token,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+export default { register, login };
+
