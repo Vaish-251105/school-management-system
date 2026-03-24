@@ -1,201 +1,136 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
+  User, 
+  Mail, 
+  Shield, 
+  Phone, 
+  MapPin, 
+  Calendar, 
   ChevronLeft, 
-  MoreVertical,
-  Verified,
-  Mail,
-  Phone,
-  GraduationCap,
-  BadgeInfo,
-  Bell,
-  Moon,
-  Fingerprint,
-  QrCode,
   LogOut,
-  User as UserIcon,
-  ShieldCheck,
+  Camera,
+  Edit3,
+  CheckCircle,
+  Clock,
   Briefcase,
-  Layers,
-  Star,
-  Globe,
-  Activity,
-  Award,
-  ChevronRight
+  GraduationCap
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 
 export default function Profile() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  const { user, logout } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const role = user?.role?.toLowerCase() || "student";
 
-  const logout = () => {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("token");
+  const bannerGradients = {
+    admin: "bg-[#1e1b4b]",
+    teacher: "bg-[#4F46E5]",
+    student: "bg-[#4338CA]",
+    parent: "bg-rose-600",
+    accountant: "bg-emerald-600"
+  };
+
+  const handleLogout = () => {
+    logout();
     navigate("/login");
   };
 
-  const getRoleBadge = () => {
-    const r = user.role?.toLowerCase() || 'student';
-    const roles = {
-      admin: { color: "bg-red-50 text-red-600 border-red-100", icon: <ShieldCheck className="w-4 h-4" />, label: "Administrator" },
-      teacher: { color: "bg-indigo-50 text-indigo-600 border-indigo-100", icon: <GraduationCap className="w-4 h-4" />, label: "Teacher" },
-      student: { color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: <UserIcon className="w-4 h-4" />, label: "Student" },
-      accountant: { color: "bg-amber-50 text-amber-600 border-amber-100", icon: <Briefcase className="w-4 h-4" />, label: "Accountant" },
-      parent: { color: "bg-purple-50 text-purple-600 border-purple-100", icon: <Layers className="w-4 h-4" />, label: "Parent" }
-    };
-    return roles[r] || { color: "bg-gray-50 text-gray-600 border-gray-100", icon: <UserIcon className="w-4 h-4" />, label: user.role };
-  };
-
-  const badge = getRoleBadge();
-
   return (
-    <div className="bg-[#fafafa] min-h-screen font-sans animate-in fade-in transition-all pb-24">
+    <div className="bg-[#fafafa] min-h-screen pb-40 font-sans animate-in fade-in transition-all">
       
-      {/* HEADER BACKGROUND */}
-      <div className="absolute top-0 left-0 w-full h-[400px] bg-[#1e1b4b] z-0 rounded-b-[60px] shadow-2xl overflow-hidden">
-         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px]"></div>
+      {/* HEADER BANNER - FULL VISIBILITY */}
+      <div className={`${bannerGradients[role]} h-80 rounded-b-[80px] relative shadow-3xl overflow-hidden`}>
+         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+         <div className="absolute top-10 left-10 z-10">
+            <button onClick={() => navigate(-1)} className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition backdrop-blur-md active:scale-95 group">
+               <ChevronLeft className="w-8 h-8 text-white group-hover:-translate-x-1 transition-transform" />
+            </button>
+         </div>
+         <div className="absolute bottom-10 left-10 right-10 flex flex-col items-center">
+            <h1 className="text-white text-3xl font-black uppercase tracking-widest opacity-20">Identity Matrix</h1>
+         </div>
       </div>
 
-      {/* HEADER BAR */}
-      <div className="relative z-10 px-8 pt-12 pb-6 max-w-5xl mx-auto flex justify-between items-center text-white">
-        <button 
-          onClick={() => navigate(-1)}
-          className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl backdrop-blur-md active:scale-95 group">
-          <ChevronLeft className="w-7 h-7 text-white" />
-        </button>
-        <h1 className="text-white text-xl font-black uppercase tracking-[3px]">My Profile</h1>
-        <button 
-          onClick={() => alert("Profile editing is currently locked.")}
-          className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl">
-          <MoreVertical className="w-7 h-7 text-white" />
-        </button>
-      </div>
+      <div className="max-w-4xl mx-auto px-8 -mt-24 relative z-50">
+         
+         {/* PROFILE CORE CARD */}
+         <div className="bg-white rounded-[60px] shadow-3xl border border-gray-100 p-12 text-center relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-150 transition-transform duration-700">
+               <Shield className="w-40 h-40 text-black" />
+            </div>
+            
+            <div className="relative inline-block mb-10">
+               <div className="w-48 h-48 rounded-[55px] bg-[#F9FAFB] border-8 border-white shadow-2xl flex items-center justify-center font-black text-[#1e1b4b] text-6xl group-hover:rotate-6 transition-transform">
+                  {user?.name?.[0] || "U"}
+               </div>
+               <button className="absolute bottom-2 right-2 bg-[#4F46E5] p-5 rounded-3xl text-white shadow-2xl border-4 border-white hover:scale-110 active:scale-90 transition-all">
+                  <Camera className="w-7 h-7" />
+               </button>
+            </div>
 
-      <div className="max-w-5xl mx-auto px-8 mt-12 relative z-10">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          
-          {/* LEFT: IDENTITY CARD */}
-          <div className="lg:col-span-1">
-             <div className="bg-white rounded-[50px] p-10 shadow-3xl flex flex-col items-center text-center border border-gray-100 animate-in slide-in-from-bottom duration-700">
-                <div className="relative mb-10">
-                  <div className="w-40 h-40 bg-[#1e1b4b] rounded-[45px] border-[6px] border-white shadow-2xl overflow-hidden p-1">
-                     <img 
-                       src={`https://ui-avatars.com/api/?name=${user.name || "UN"}&background=1e1b4b&color=ffffff&size=256&bold=true`} 
-                       alt="Avatar" 
-                       className="w-full h-full object-cover rounded-[35px]"
-                     />
-                  </div>
-                  <div className="absolute -bottom-4 -right-4 bg-emerald-500 p-4 rounded-2xl shadow-2xl border-4 border-white">
-                     <Verified className="w-7 h-7 text-white" />
-                  </div>
-                </div>
+            <h2 className="text-4xl font-black text-black uppercase tracking-tight leading-none mb-3">{user?.name || "Member Name"}</h2>
+            <div className={`mx-auto w-fit px-8 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-[3px] shadow-sm border ${role === 'admin' ? 'bg-[#1e1b4b] text-white border-white/10' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+               {role} Node
+            </div>
+            
+            <p className="text-gray-400 font-bold text-sm mt-8 leading-relaxed max-w-md mx-auto italic opacity-60">Verified institutional identification for Smart School ERP v2.0. All access logs are encrypted and monitored.</p>
+         </div>
 
-                <h2 className="text-3xl font-black text-black tracking-tight leading-tight uppercase">{user.name || "User"}</h2>
-                <div className={`mt-6 inline-flex items-center gap-2 border-2 px-6 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${badge.color}`}>
-                   {badge.icon}
-                   {badge.label}
-                </div>
+         {/* DETAILS GRID */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+            
+            <DetailCard icon={<Mail />} label="Email Destination" val={user?.email || "n/a"} />
+            <DetailCard icon={<Shield />} label="Security Level" val={role.toUpperCase()} />
+            <DetailCard icon={<Phone />} label="Communication Line" val="+91 98765-43210" />
+            <DetailCard icon={<Calendar />} label="Registration Date" val="24 March 2024" />
+            
+            {role === 'student' && (
+              <>
+                <DetailCard icon={<GraduationCap />} label="Academic Node" val="Class 10-A" />
+                <DetailCard icon={<CheckCircle />} label="Portal Status" val="Authorized" />
+              </>
+            )}
 
-                <div className="w-full grid grid-cols-2 gap-4 mt-12 pt-8 border-t border-gray-50">
-                   <div className="text-center">
-                      <p className="text-black font-black text-xl mb-0.5 tracking-tight">1,240</p>
-                      <p className="text-gray-400 font-bold text-[9px] uppercase tracking-widest">Points</p>
-                   </div>
-                   <div className="text-center">
-                      <p className="text-black font-black text-xl mb-0.5 tracking-tight">98%</p>
-                      <p className="text-gray-400 font-bold text-[9px] uppercase tracking-widest">Attendance</p>
-                   </div>
-                </div>
+            {role === 'teacher' && (
+              <>
+                <DetailCard icon={<Briefcase />} label="Faculty Domain" val="Sr. Mathematics" />
+                <DetailCard icon={<Clock />} label="Expertise Rank" val="8.5 Years" />
+              </>
+            )}
+         </div>
 
-                <button 
-                  onClick={logout}
-                  className="mt-10 w-full bg-red-50 text-red-500 py-6 rounded-3xl font-black flex items-center justify-center gap-3 transition-all hover:bg-red-500 hover:text-white active:scale-95 shadow-sm uppercase tracking-widest text-[12px]">
-                  <LogOut className="w-5 h-5" /> Logout Session
-                </button>
-             </div>
-          </div>
-
-          {/* RIGHT: DETAILS & SECURITY */}
-          <div className="lg:col-span-2 space-y-8 animate-in slide-in-from-bottom duration-1000">
-             
-             {/* QUICK STATS */}
-             <div className="bg-white/10 backdrop-blur-md rounded-[50px] p-8 border border-white/10 grid grid-cols-3 gap-6 shadow-2xl">
-                <ProfileStat icon={<Award className="w-6 h-6" />} val="Gold" label="Status" color="text-amber-400" />
-                <ProfileStat icon={<Globe className="w-6 h-6" />} val="Active" label="Network" color="text-teal-400" />
-                <ProfileStat icon={<Activity className="w-6 h-6" />} val="Live" label="Cloud" color="text-emerald-400" />
-             </div>
-
-             <div className="bg-white p-10 rounded-[50px] border border-gray-100 shadow-3xl text-black">
-                <div className="flex justify-between items-center mb-10">
-                   <h3 className="text-black font-black text-2xl tracking-tight uppercase tracking-widest leading-none">Profile Details</h3>
-                   <div className="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-2">
-                     <div className="w-2.5 h-2.5 bg-[#4f46e5] rounded-full animate-pulse"></div>
-                     <span className="text-[#4f46e5] text-[10px] font-black uppercase tracking-widest leading-none">Synced</span>
-                   </div>
-                </div>
-
-                <div className="grid gap-6">
-                   <InfoField icon={<Mail className="w-5 h-5" />} title="Email Address" val={user.email || "node@school.edu"} />
-                   <InfoField icon={<ShieldCheck className="w-5 h-5" />} title="Student ID" val={user._id || "SMS-000"} />
-                   <InfoField icon={<BadgeInfo className="w-5 h-5" />} title="Assigned Role" val={user.role?.toUpperCase() || "USER"} />
-                </div>
-             </div>
-
-             {/* SECURITY BLOCK */}
-             <div className="bg-black p-10 rounded-[50px] shadow-3xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-125 transition duration-700">
-                   <ShieldCheck className="w-32 h-32 text-indigo-400" />
-                </div>
-                <h4 className="text-white text-2xl font-black tracking-tight uppercase mb-4 relative z-10">Security Center</h4>
-                <p className="text-white/40 font-bold text-sm leading-relaxed mb-10 relative z-10">Your account is secured with 256-bit encryption. Contact the administrator hub for any changes to your core identity data.</p>
-                <div className="flex flex-wrap gap-4 relative z-10">
-                   <button 
-                     onClick={() => alert("Digital Identity Key is being generated...")}
-                     className="bg-[#4f46e5] text-white px-8 py-4 rounded-[22px] font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-indigo-700 transition active:scale-95 flex items-center gap-3">
-                      <QrCode className="w-5 h-5" /> Identity Key
-                   </button>
-                   <button 
-                     onClick={() => alert("Redirecting to password reset flow...")}
-                     className="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-[22px] font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition active:scale-95">
-                      Reset Password
-                   </button>
-                </div>
-             </div>
-
-          </div>
-
-        </div>
+         <div className="mt-16 flex flex-col sm:flex-row gap-6">
+            <button className="flex-1 bg-black text-white p-8 rounded-[35px] font-black text-sm uppercase tracking-[4px] shadow-3xl hover:bg-[#1e1b4b] transition-all active:scale-95 flex items-center justify-center gap-4 group">
+               <Edit3 className="w-6 h-6 group-hover:rotate-12 transition-transform" /> Modify Profile
+            </button>
+            <button 
+               onClick={handleLogout}
+               className="flex-1 bg-rose-50 text-rose-600 p-8 rounded-[35px] font-black text-sm uppercase tracking-[4px] border border-rose-100 hover:bg-rose-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-4 group shadow-xl shadow-rose-500/5">
+               <LogOut className="w-6 h-6 group-hover:-translate-x-1 transition-transform" /> Exit Session
+            </button>
+         </div>
 
       </div>
+
+      <div className="fixed top-0 left-0 w-full h-2 bg-[#4F46E5] z-[300]"></div>
 
     </div>
   );
 }
 
-function ProfileStat({ icon, val, label, color }) {
+function DetailCard({ icon, label, val }) {
   return (
-    <div className="flex flex-col items-center text-center group">
-       <div className={`${color} bg-white/5 p-4 rounded-3xl mb-4 group-hover:bg-white group-hover:text-black transition-all duration-500 shadow-inner`}>
-         {icon}
+    <div className="bg-white p-10 rounded-[50px] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group flex items-center gap-8 text-black">
+       <div className="bg-indigo-50 p-6 rounded-[30px] text-indigo-600 group-hover:bg-[#4F46E5] group-hover:text-white transition-all shadow-inner">
+          {React.cloneElement(icon, { size: 28 })}
        </div>
-       <p className="text-white font-black text-lg tracking-tight leading-none mb-1 uppercase">{val}</p>
-       <p className="text-white/40 font-black text-[9px] uppercase tracking-widest">{label}</p>
-    </div>
-  );
-}
-
-function InfoField({ icon, title, val }) {
-  return (
-    <div className="flex items-center p-6 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-all rounded-[30px] group">
-       <div className="w-14 h-14 bg-indigo-50 text-[#4f46e5] rounded-[24px] flex items-center justify-center shrink-0 border border-indigo-100 group-hover:bg-[#4f46e5] group-hover:text-white transition-all shadow-sm">
-          {icon}
+       <div className="flex-1 truncate">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 opacity-60">{label}</p>
+          <p className="text-xl font-black uppercase tracking-tight text-black truncate">{val}</p>
        </div>
-       <div className="ml-8 flex-1">
-          <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">{title}</p>
-          <p className="text-black font-black text-lg tracking-tight leading-none group-hover:text-[#4f46e5] transition-colors">{val}</p>
-       </div>
-       <ChevronRight className="w-8 h-8 text-gray-100 group-hover:text-black transition-colors" />
     </div>
   );
 }

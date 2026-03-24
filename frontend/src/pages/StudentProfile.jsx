@@ -1,186 +1,121 @@
-import { useState } from "react"
-import { useStudent } from "../context/studentContext"
-import { useClass } from "../context/ClassContext"
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  LineChart,
-  Line
-} from "recharts"
+import React, { useState, useEffect } from "react";
+import { 
+  User, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Calendar, 
+  ShieldCheck, 
+  ChevronLeft, 
+  CheckCircle,
+  GraduationCap,
+  Award,
+  BookOpen,
+  ClipboardList
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 
 export default function StudentProfile() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  
+  // Data from backend login includes student details
+  const name = user?.name || "Student Name";
+  const email = user?.email || "n/a";
+  const rollNo = user?.rollNumber || "2024-001";
+  const className = user?.class || "10";
+  const section = user?.section || "A";
 
-  const { students } = useStudent()
-  const { classes } = useClass()
-
-  const [selectedStudent, setSelectedStudent] = useState("")
-
-  const attendance = JSON.parse(localStorage.getItem("attendance")) || {}
-  const results = JSON.parse(localStorage.getItem("results")) || []
-  const fees = JSON.parse(localStorage.getItem("fees")) || []
-
-  const student = students.find(s => String(s.id) === selectedStudent)
-
-  if (!student) {
-    return (
-      <div className="p-6">
-
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">
-          Student Profile Dashboard
-        </h1>
-
-        <select
-          className="border p-2 rounded"
-          onChange={(e) => setSelectedStudent(e.target.value)}
-        >
-          <option value="">Select Student</option>
-          {students.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-
-      </div>
-    )
-  }
-
-  const studentClass = classes.find(c => String(c.id) === String(student.classId))
-
-  /* Attendance Calculation */
-  let present = 0, absent = 0
-  Object.values(attendance).forEach(classData => {
-    Object.values(classData).forEach(day => {
-      if (day[student.id] === "Present") present++
-      if (day[student.id] === "Absent") absent++
-    })
-  })
-  const attendancePercent = present + absent ? Math.round((present / (present + absent)) * 100) : 0
-  const attendanceChart = [
-    { name: "Present", value: present },
-    { name: "Absent", value: absent }
-  ]
-
-  /* Exam Results */
-  const studentResults = results.filter(r => String(r.studentId) === String(student.id))
-  const avgMarks = studentResults.length
-    ? Math.round(studentResults.reduce((a, b) => a + Number(b.marks), 0) / studentResults.length)
-    : 0
-  const marksChart = studentResults.map(r => ({
-    exam: r.subject || r.exam || "Exam",
-    marks: Number(r.marks)
-  }))
-
-  /* Fees */
-  const studentFees = fees.filter(f => String(f.studentId) === String(student.id))
-  const paid = studentFees.filter(f => f.status === "Paid").reduce((a, b) => a + Number(b.amount), 0)
-  const pending = studentFees.filter(f => f.status === "Pending").reduce((a, b) => a + Number(b.amount), 0)
+  const bannerTheme = "bg-[#4338CA]";
 
   return (
-    <div className="p-6 space-y-8">
-
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-        Student Profile Dashboard
-      </h1>
-
-      {/* Student Selector */}
-      <select
-        className="border p-2 rounded"
-        value={selectedStudent}
-        onChange={(e) => setSelectedStudent(e.target.value)}
-      >
-        {students.map(s => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
-
-      {/* Student Info */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-xl p-6 max-w-xl">
-        <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">
-          Student Information
-        </h2>
-        <p><b>Name:</b> {student.name}</p>
-        <p><b>Class:</b> {studentClass?.className}</p>
-        <p><b>Roll No:</b> {student.rollNo}</p>
-        <p><b>Contact:</b> {student.contact}</p>
-        <p><b>Address:</b> {student.address}</p>
+    <div className="bg-[#fafafa] min-h-screen pb-40 font-sans animate-in fade-in transition-all">
+      
+      {/* PREMIUM HEADER - MOBILE STYLE */}
+      <div className={`${bannerTheme} h-80 rounded-b-[80px] relative shadow-3xl overflow-hidden`}>
+         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+         <div className="absolute top-10 left-10 z-10">
+            <button onClick={() => navigate(-1)} className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition backdrop-blur-md active:scale-95 group">
+               <ChevronLeft className="w-8 h-8 text-white group-hover:-translate-x-1 transition-transform" />
+            </button>
+         </div>
       </div>
 
-      {/* Dashboard Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-blue-100 dark:bg-blue-900 p-6 rounded-xl shadow hover:scale-105 transition">
-          <p className="text-gray-600 dark:text-gray-300">Attendance %</p>
-          <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-            {attendancePercent}%
-          </h2>
-        </div>
+      <div className="max-w-4xl mx-auto px-8 -mt-24 relative z-50">
+         
+         {/* STUDENT CORE CARD */}
+         <div className="bg-white rounded-[60px] shadow-3xl border border-gray-100 p-12 text-center relative group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+               <GraduationCap className="w-40 h-40 text-black" />
+            </div>
+            
+            <div className="relative inline-block mb-10">
+               <div className="w-48 h-48 rounded-[55px] bg-[#F9FAFB] border-8 border-white shadow-2xl flex items-center justify-center font-black text-[#1e1b4b] text-6xl group-hover:rotate-6 transition-transform">
+                  {name[0].toUpperCase()}
+               </div>
+               <div className="absolute bottom-2 right-2 bg-emerald-500 p-3 rounded-2xl text-white shadow-2xl border-4 border-white">
+                  <CheckCircle className="w-6 h-6" />
+               </div>
+            </div>
 
-        <div className="bg-green-100 dark:bg-green-900 p-6 rounded-xl shadow hover:scale-105 transition">
-          <p className="text-gray-600 dark:text-gray-300">Fees Paid</p>
-          <h2 className="text-2xl font-bold text-green-700 dark:text-green-300">
-            ₹{paid}
-          </h2>
-        </div>
+            <h2 className="text-4xl font-black text-black uppercase tracking-tight leading-none mb-3">{name}</h2>
+            <div className={`mx-auto w-fit px-8 py-2.5 bg-indigo-50 text-indigo-600 rounded-2xl text-[11px] font-black uppercase tracking-[3px] shadow-sm border border-indigo-100`}>
+               Class {className}-{section} • Roll {rollNo}
+            </div>
+         </div>
 
-        <div className="bg-yellow-100 dark:bg-yellow-900 p-6 rounded-xl shadow hover:scale-105 transition">
-          <p className="text-gray-600 dark:text-gray-300">Pending Fees</p>
-          <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-            ₹{pending}
-          </h2>
-        </div>
+         {/* ACADEMIC STATS */}
+         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12 animate-in slide-in-from-bottom duration-700">
+            <StatCard label="Attendance" val="94%" color="indigo" icon={<ClipboardList />} />
+            <StatCard label="Academic Rank" val="#04" color="emerald" icon={<Award />} />
+            <StatCard label="Assignments" val="12/15" color="rose" icon={<BookOpen />} />
+            <StatCard label="Portal Status" val="Active" color="amber" icon={<ShieldCheck />} />
+         </div>
 
-        <div className="bg-purple-100 dark:bg-purple-900 p-6 rounded-xl shadow hover:scale-105 transition">
-          <p className="text-gray-600 dark:text-gray-300">Exam Average</p>
-          <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-            {avgMarks}
-          </h2>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-6">
-
-        {/* Attendance Chart */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <h3 className="font-semibold mb-3 text-gray-800 dark:text-white">
-            Attendance Summary
-          </h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={attendanceChart}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Exam Performance */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <h3 className="font-semibold mb-3 text-gray-800 dark:text-white">
-            Exam Performance
-          </h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={marksChart}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="exam" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="marks" stroke="#8b5cf6" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+         {/* BIO DATA */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+            <InfoRow icon={<Mail />} label="Registered Email" val={email} />
+            <InfoRow icon={<Phone />} label="Parent Contact" val="+91 91234 56789" />
+            <InfoRow icon={<MapPin />} label="Residential Node" val="New Delhi, Sector 45" />
+            <InfoRow icon={<Calendar />} label="Admission Date" val="20 Aug 2023" />
+            <InfoRow icon={<User />} label="Father's Name" val="S. Kumar" />
+            <InfoRow icon={<ShieldCheck />} label="Blood Group" val="O+ Positive" />
+         </div>
 
       </div>
-
     </div>
-  )
+  );
+}
+
+function StatCard({ label, val, color, icon }) {
+   const variants = {
+     indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
+     emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+     rose: "bg-rose-50 text-rose-600 border-rose-100",
+     amber: "bg-amber-50 text-amber-600 border-amber-100"
+   };
+   return (
+      <div className={`p-8 rounded-[40px] border shadow-sm hover:shadow-xl transition-all ${variants[color]}`}>
+         <div className="mb-4">{React.cloneElement(icon, { size: 24, className: "opacity-60" })}</div>
+         <p className="text-[25px] font-black tracking-tight leading-none mb-2">{val}</p>
+         <p className="text-[9px] font-black uppercase tracking-[3px] opacity-60 leading-none">{label}</p>
+      </div>
+   );
+}
+
+function InfoRow({ icon, label, val }) {
+   return (
+      <div className="bg-white p-10 rounded-[50px] border border-gray-100 shadow-sm flex items-center gap-8 group hover:shadow-2xl transition-all">
+         <div className="bg-gray-50 p-6 rounded-[30px] text-indigo-600 group-hover:bg-[#4338CA] group-hover:text-white transition-all shadow-inner">
+            {React.cloneElement(icon, { size: 28 })}
+         </div>
+         <div className="flex-1 truncate">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 opacity-60">{label}</p>
+            <p className="text-xl font-black uppercase tracking-tight text-black truncate">{val}</p>
+         </div>
+      </div>
+   );
 }

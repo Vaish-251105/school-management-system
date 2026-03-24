@@ -1,39 +1,44 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Mail, Lock, HelpCircle, ChevronRight, Loader2 } from "lucide-react";
-import { FaApple, FaFacebook, FaQuestionCircle } from "react-icons/fa";
+import { GraduationCap, Mail, Lock, HelpCircle, ChevronRight, Loader2, User, UserCheck, Shield, BookOpen, Landmark } from "lucide-react";
+import { FaApple, FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import api from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const [email, setEmail] = useState("student@school.com");
+  const [password, setPassword] = useState("123");
   const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
 
   const roles = [
-    { id: "student", label: "Student" },
-    { id: "teacher", label: "Teacher" },
-    { id: "parent", label: "Parent" },
-    { id: "admin", label: "Admin" },
-    { id: "accountant", label: "Accounts" },
+    { id: "student", label: "Student", icon: <User className="w-4 h-4" /> },
+    { id: "teacher", label: "Teacher", icon: <BookOpen className="w-4 h-4" /> },
+    { id: "parent", label: "Parent", icon: <UserCheck className="w-4 h-4" /> },
+    { id: "admin", label: "Admin", icon: <Shield className="w-4 h-4" /> },
+    { id: "accountant", label: "Accountant", icon: <Landmark className="w-4 h-4" /> },
   ];
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", { email, password });
+      const response = await api.post("/auth/login", { email, password, role });
       const data = response.data;
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("currentUser", JSON.stringify(data));
       
+      // Sync with AuthContext
+      login(data);
+
       const r = data.role?.toLowerCase();
       if (r === "admin") navigate("/admin-dashboard");
-      else if (r === "teacher") navigate("/teacher-dashboard");
-      else if (r === "parent") navigate("/parent-dashboard");
+      else if (r === "teacher") navigate("/dashboard"); 
+      else if (r === "parent") navigate("/dashboard");  
       else if (r === "accountant") navigate("/accountant");
       else navigate("/dashboard");
     } catch (err) {
@@ -46,103 +51,94 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] p-6 text-black font-sans relative overflow-hidden transition-all animate-in fade-in">
       
-      {/* DECORATIVE ELEMENTS */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-100 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl opacity-30"></div>
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-rose-100 rounded-full translate-y-1/3 -translate-x-1/3 blur-3xl opacity-20"></div>
+      {/* DECORATIVE ELEMENTS - MATCHING MOBILE BLUR */}
+      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px] opacity-10"></div>
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full translate-y-1/3 -translate-x-1/3 blur-[100px] opacity-10"></div>
 
-      {/* BRANDING SECTION */}
-      <div className="flex flex-col items-center mb-10 relative z-10">
-        <div className="bg-[#1e1b4b] p-5 rounded-[28px] shadow-2xl mb-6 flex items-center justify-center hover:scale-105 transition-transform duration-500">
+      {/* BRANDING SECTION - MATCHING MOBILE LOGO */}
+      <div className="flex flex-col items-center mb-8 relative z-10 animate-in slide-in-from-top duration-700">
+        <div className="bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] p-4 rounded-[24px] shadow-3xl mb-6 flex items-center justify-center hover:scale-110 transition-transform duration-500 ring-4 ring-white/50">
            <GraduationCap className="text-white w-10 h-10" />
         </div>
-        <h1 className="text-4xl font-black text-black tracking-tight text-center uppercase">Smart School ERP</h1>
-        <p className="text-gray-400 font-black text-[10px] uppercase tracking-[4px] mt-2 italic">Institutional Portal</p>
+        <h1 className="text-3xl font-black text-[#000000] tracking-tight text-center uppercase">Smart School ERP</h1>
+        <p className="text-[#555555] font-bold text-[9px] uppercase tracking-[3px] mt-2 italic opacity-60 text-center">Modern Education Framework</p>
       </div>
 
-      <div className="w-full max-w-md bg-white rounded-[40px] shadow-3xl border border-gray-100 p-10 relative z-10 animate-in slide-in-from-bottom duration-700">
+      <div className="w-full max-w-md bg-white rounded-[32px] shadow-3xl border border-gray-100 p-8 md:p-10 relative z-10 animate-in slide-in-from-bottom duration-700">
         
-        {/* HELP TOOLTIP */}
-        <div className="absolute -top-4 -right-4">
-           <button 
-              onClick={() => alert("MASTER ACCESS ACTIVATED\n\nPassword: 123 (All Roles)\n\n• Admin: admin@school.com\n• Staff: staff@school.com\n• Student: user@school.com")}
-              className="bg-white text-indigo-600 p-3.5 rounded-2xl shadow-xl border border-gray-100 hover:bg-indigo-50 transition active:scale-90"
-           >
-              <HelpCircle className="w-6 h-6" />
-           </button>
+        {/* ROLE SELECTOR GRID - MATCHING MOBILE CHIPS */}
+        <div className="bg-[#F9FAFB] p-2 rounded-[24px] mb-8 border border-gray-100">
+          <div className="grid grid-cols-3 gap-2">
+            {roles.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => {
+                  setRole(r.id);
+                  setEmail(`${r.id === 'accountant' ? 'accountant' : r.id}@school.com`);
+                  setPassword("123");
+                }}
+                className={`flex items-center justify-center gap-2 py-3.5 px-2 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all duration-300 ${
+                  role === r.id
+                    ? "bg-[#4F46E5] text-white shadow-2xl scale-105"
+                    : "text-[#555555] hover:text-black hover:bg-white"
+                }`}
+              >
+                {r.icon}
+                <span className="truncate">{r.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* ROLE SELECTOR */}
-        <div className="bg-gray-50 p-2 rounded-3xl mb-8 flex flex-wrap gap-2 justify-center border border-gray-100">
-          {roles.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => {
-                setRole(r.id);
-                setEmail(r.id === 'student' ? 'user@school.com' : `${r.id}@school.com`);
-                setPassword("123");
-              }}
-              className={`flex-1 min-w-[30%] py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
-                role === r.id
-                  ? "bg-[#1e1b4b] text-white shadow-xl"
-                  : "text-gray-400 hover:text-black hover:bg-white"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-1.5 px-1">
-            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-indigo-600 transition" />
-              <input
-                type="email"
-                required
-                placeholder="user@school.edu"
-                className="w-full pl-14 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white transition-all font-bold text-lg text-black placeholder-gray-300"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+        <form onSubmit={handleLogin} className="space-y-8">
+          <div className="space-y-2.5 px-2">
+            <label className="text-[10px] font-bold uppercase tracking-[1.5px] text-blue-600 flex items-center gap-2">
+               <Mail className="w-3 h-3" /> Email Destination
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="e.g. faculty@school.edu"
+              className="w-full px-6 py-4 bg-[#F9FAFB] border border-gray-100 rounded-[18px] outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-400 focus:bg-white transition-all font-bold text-base text-black placeholder-gray-300"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
 
-          <div className="space-y-1.5 px-1">
-             <label className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Password</label>
-            <div className="relative group">
-              <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-indigo-600 transition" />
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                className="w-full pl-14 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white transition-all font-bold text-lg text-black placeholder-gray-300"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2 px-2">
+            <label className="text-[10px] font-bold uppercase tracking-[1.5px] text-blue-600 flex items-center gap-2">
+               <Lock className="w-3 h-3" /> Secure Key
+            </label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••"
+              className="w-full px-6 py-4 bg-[#F9FAFB] border border-gray-100 rounded-[18px] outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-400 focus:bg-white transition-all font-bold text-base text-black placeholder-gray-300"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
 
-          <div className="flex justify-end pr-1">
-            <span className="text-[11px] font-black text-indigo-600 uppercase tracking-widest cursor-pointer hover:underline">Forgot Password?</span>
+          <div className="flex justify-end pr-2 text-black">
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[1.5px] cursor-pointer hover:underline opacity-60">Forgot Recovery?</span>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#1e1b4b] text-white font-black py-6 rounded-3xl shadow-2xl hover:bg-black transition-all duration-300 flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest text-sm"
+            className="group w-full bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white font-black py-5 rounded-[24px] shadow-xl hover:opacity-90 transition-all duration-500 flex items-center justify-center gap-4 active:scale-95 uppercase tracking-[2px] text-xs"
           >
             {loading ? <Loader2 className="animate-spin w-6 h-6" /> : (
               <>
-                Login Now <ChevronRight className="w-6 h-6" />
+                Initialize Access <ChevronRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
               </>
             )}
           </button>
 
           <div className="relative flex items-center justify-center py-4">
             <div className="w-full border-t border-gray-50"></div>
-            <span className="absolute bg-white px-4 text-[9px] font-black text-gray-300 uppercase tracking-[4px]">Social Connect</span>
+            <span className="absolute bg-white px-4 text-[9px] font-bold text-gray-300 uppercase tracking-[4px]">External Nodes</span>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -154,14 +150,14 @@ export default function Login() {
 
       </div>
 
-      <div className="mt-12 text-center relative z-10">
-        <p className="text-gray-400 font-bold text-[13px]">
-          Don't have an account? 
+      <div className="mt-12 text-center relative z-10 animate-in slide-in-from-bottom duration-1000">
+        <p className="text-[#555555] font-bold text-[13px]">
+          New to the portal? 
           <span 
             onClick={() => navigate('/signup')} 
-            className="text-indigo-600 font-black cursor-pointer hover:underline uppercase tracking-widest ml-2"
+            className="text-blue-600 font-bold cursor-pointer hover:underline uppercase tracking-[1px] ml-2"
           >
-            Register Here
+            Establish Account
           </span>
         </p>
       </div>
@@ -172,7 +168,7 @@ export default function Login() {
 
 function SocialBtn({ icon }) {
   return (
-    <button className="flex items-center justify-center p-4.5 border border-gray-100 rounded-2xl hover:bg-gray-50 transition active:scale-95 shadow-sm">
+    <button className="flex items-center justify-center p-5 border border-[#E5E7EB] rounded-[24px] hover:bg-[#F9FAFB] transition-all active:scale-90 shadow-sm bg-white hover:shadow-xl">
        {icon}
     </button>
   );

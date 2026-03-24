@@ -3,7 +3,8 @@ import Message from '../models/Message.js';
 // Send message
 export const sendMessage = async (req, res) => {
   try {
-    const { recipientId, subject, message } = req.body;
+    const { recipient, subject, message } = req.body;
+    const recipientId = recipient;
     const senderId = req.user._id;
 
     if (!recipientId || !subject || !message) {

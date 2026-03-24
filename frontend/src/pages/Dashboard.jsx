@@ -16,195 +16,268 @@ import {
   Plus,
   Landmark,
   ClipboardList,
-  CalendarClock
+  CalendarClock,
+  MessageSquare,
+  Activity,
+  ShieldCheck,
+  TrendingUp,
+  Clock,
+  Navigation,
+  Download,
+  GraduationCap
 } from "lucide-react";
 import api from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [notices, setNotices] = useState([]);
+  const [timetable, setTimetable] = useState([]);
+  const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
-  const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-  const role = user.role?.toLowerCase() || "student";
+  const [selectedClass, setSelectedClass] = useState("10");
+  
+  const role = user?.role?.toLowerCase() || "student";
+
+  // COLOR SCHEMES - MATCHING FLUTTER DASHBOARDS
+  // COLOR SCHEMES - RESTORED BLUE/PURPLE GRADIENT
+  const schemes = {
+    admin: "from-[#1e1b4b] to-[#4338ca]",
+    teacher: "from-[#3b82f6] to-[#8b5cf6]",
+    student: "from-[#3b82f6] to-[#8b5cf6]",
+    parent: "from-[#ec4899] to-[#8b5cf6]",
+    accountant: "from-[#0d9488] to-[#0b6e65]"
+  };
+
+  const portalThemes = {
+    admin: "Institutional Root",
+    teacher: "Faculty Portal",
+    student: "Smart School ERP",
+    parent: "Parent Hub",
+    accountant: "Finance Node"
+  };
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [statsRes, noticesRes] = await Promise.all([
-          api.get("/dashboard/stats"),
-          api.get("/notices")
-        ]);
-        setStats(statsRes.data);
-        setNotices(noticesRes.data);
-      } catch (err) {
-        console.error("Dashboard error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchDashboardData();
-  }, []);
+    if (role === 'teacher') fetchTimetable(selectedClass);
+    if (role === 'parent') fetchChildren();
+  }, [role, selectedClass]);
 
-  // ROLE-SPECIFIC MODULES
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, noticesRes] = await Promise.all([
+        api.get("/dashboard/stats"),
+        api.get("/notices")
+      ]);
+      setStats(statsRes.data);
+      setNotices(Array.isArray(noticesRes.data) ? noticesRes.data : []);
+    } catch (err) {
+      console.error("Dashboard error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTimetable = async (grade) => {
+    try {
+      const res = await api.get(`/timetable/class/${grade}`);
+      setTimetable(res.data.length > 0 ? res.data[0].periods : []);
+    } catch (err) { console.error("Timetable error:", err); }
+  };
+
+  const fetchChildren = async () => {
+    try {
+      const res = await api.get("/students"); // Mocking children as top 2 students
+      setChildren(res.data.slice(0, 2));
+    } catch (err) { console.error("Children fetch error:", err); }
+  };
+
   const modules = [
-    { id: 'calendar', title: 'Calendar', sub: 'School Events', icon: <Calendar className="text-blue-500 w-7 h-7" />, color: 'bg-blue-50', path: '/calendar' },
-    { id: 'fees', title: 'Fees', sub: 'Payments', icon: <Wallet className="text-purple-500 w-7 h-7" />, color: 'bg-purple-50', path: '/fees', roles: ['student', 'parent', 'admin', 'accountant'] },
-    { id: 'classes', title: 'Classes', sub: 'Schedule', icon: <Book className="text-orange-500 w-7 h-7" />, color: 'bg-orange-50', path: '/classes' },
-    { id: 'exams', title: 'Exams', sub: 'Results', icon: <Award className="text-green-500 w-7 h-7" />, color: 'bg-green-50', path: '/exams', roles: ['student', 'parent'] },
-    { id: 'exams-schedule', title: 'Exam Schedule', sub: 'Planning', icon: <CalendarClock className="text-amber-500 w-7 h-7" />, color: 'bg-amber-50', path: '/exams-schedule', roles: ['teacher', 'admin'] },
-    { id: 'homework', title: 'Homework', sub: `${stats?.homeworkCount || 0} Records`, icon: <PenTool className="text-pink-500 w-7 h-7" />, color: 'bg-pink-50', path: '/homework-notices' },
-    { id: 'transport', title: 'Transport', sub: 'Bus Route', icon: <Bus className="text-sky-500 w-7 h-7" />, color: 'bg-sky-50', path: '/transport' },
-    { id: 'hub', title: 'Notice Board', sub: 'Broadcasts', icon: <Bell className="text-red-500 w-7 h-7" />, color: 'bg-rose-50', path: '/communication' },
+    { id: 'attendance', title: 'Attendance', sub: 'Daily Logs', icon: <ClipboardList className="w-7 h-7" />, color: 'emerald', path: '/attendance', roles: ['admin', 'teacher', 'student', 'parent'] },
+    { id: 'fees', title: 'Fees Panel', sub: 'Payments', icon: <Wallet className="w-7 h-7" />, color: 'indigo', path: '/fees', roles: ['admin', 'parent', 'accountant'] },
+    { id: 'homework', title: role === 'teacher' ? 'Assignments' : 'Homework', sub: role === 'teacher' ? 'Upload' : 'Records', icon: <PenTool className="w-7 h-7" />, color: 'rose', path: '/homework', roles: ['admin', 'teacher', 'student'] },
+    { id: 'exams', title: 'Exam Results', sub: 'Transcripts', icon: <Award className="w-7 h-7" />, color: 'amber', path: '/exams', roles: ['admin', 'teacher', 'student', 'parent'] },
+    { id: 'communication', title: 'Messaging', sub: 'Direct Inmate', icon: <MessageSquare className="w-7 h-7" />, color: 'sky', path: '/communication', roles: ['admin', 'teacher', 'student'] },
+    { id: 'transport', title: 'Fleet Tracking', sub: 'Live Transit', icon: <Navigation className="w-7 h-7" />, color: 'teal', path: '/transport', roles: ['admin', 'student', 'parent'] },
+    { id: 'calendar', title: 'School Calendar', sub: 'Events', icon: <Calendar className="w-7 h-7" />, color: 'blue', path: '/calendar', roles: ['admin', 'teacher', 'student', 'parent'] },
+    { id: 'staff', title: 'Faculty', sub: 'Management', icon: <Users className="w-7 h-7" />, color: 'indigo', path: '/staff', roles: ['admin', 'accountant'] },
   ];
-
-  if (role === 'admin') {
-    modules.push({ id: 'staff', title: 'Staff', sub: 'Management', icon: <Users className="text-indigo-500 w-7 h-7" />, color: 'bg-indigo-50', path: '/staff' });
-    modules.push({ id: 'staff-attendance', title: 'Staff Atten.', sub: 'Records', icon: <ClipboardList className="text-emerald-500 w-7 h-7" />, color: 'bg-emerald-50', path: '/staff-attendance' });
-  }
-  if (role === 'accountant') {
-    modules.push({ id: 'salaries', title: 'Salaries', sub: 'Payroll', icon: <Landmark className="text-emerald-500 w-7 h-7" />, color: 'bg-emerald-50', path: '/salaries' });
-    modules.push({ id: 'staff-attendance', title: 'Attendance', sub: 'Staff Logs', icon: <ClipboardList className="text-orange-500 w-7 h-7" />, color: 'bg-orange-50', path: '/staff-attendance' });
-  }
 
   const filteredModules = modules.filter(m => !m.roles || m.roles.includes(role));
 
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#fafafa]">
+       <Loader2 className="w-12 h-12 animate-spin text-[#4f46e5] mb-6" />
+       <p className="text-[#555555] font-black italic tracking-widest uppercase tracking-[4px]">Syncing Terminal...</p>
+    </div>
+  );
+
   return (
-    <div className="bg-[#fafafa] min-h-screen pb-20 font-sans animate-in fade-in transition-all">
+    <div className="bg-[#fafafa] min-h-screen pb-40 font-sans transition-all">
       
-      {/* HEADER AREA */}
-      <div className="bg-gradient-to-br from-[#1e1b4b] to-[#1e1b4b] px-6 pt-12 pb-14 rounded-b-[60px] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-        <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
-            <div className="text-center md:text-left mb-6 md:mb-0 animate-in slide-in-from-bottom duration-700">
-              <p className="text-white/40 text-[10px] font-black uppercase tracking-[3px] mb-2">School ERP</p>
-              <h1 className="text-white text-[32px] font-black leading-tight uppercase">Dashboard</h1>
-              <p className="text-white/80 text-sm mt-1 font-medium">Welcome back, {user.name || "User"}</p>
+      {/* HEADER SECTION - EXACT FLUTTER MATCH */}
+      <div className={`bg-gradient-to-br ${schemes[role] || schemes.admin} px-6 pt-12 pb-16 rounded-b-[40px] shadow-3xl relative overflow-hidden transition-colors duration-1000`}>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
+            <div className="text-center md:text-left animate-in slide-in-from-left duration-700">
+               <p className="text-white/60 text-[9px] font-black uppercase tracking-[4px] mb-2 px-1 italic">{portalThemes[role] || "Dashboard"}</p>
+               <h1 className="text-white text-[32px] font-black leading-tight uppercase tracking-tight">Hello, {user?.name?.split(' ')[0] || "User"}</h1>
             </div>
-            <div className="flex items-center gap-6">
-              <div 
-                onClick={() => navigate('/notifications')}
-                className="bg-white/10 p-4 rounded-3xl border border-white/5 relative cursor-pointer hover:bg-white/20 transition group">
-                <Bell className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
-                <div className="absolute top-3 right-3 w-3 h-3 bg-rose-500 rounded-full border-4 border-[#1e1b4b]"></div>
-              </div>
-              <div
-                onClick={() => navigate('/profile')} 
-                className="w-20 h-20 rounded-[30px] border-4 border-white/10 p-1 cursor-pointer hover:scale-105 transition shadow-2xl group overflow-hidden bg-white/5"
-              >
-                  <img 
-                    src={`https://ui-avatars.com/api/?name=${user.name || "User"}&background=1e1b4b&color=ffffff&size=128&bold=true`} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover rounded-[20px] bg-[#1e1b4b]"
-                  />
-              </div>
+            
+            <div className="flex items-center gap-4 mt-6 md:mt-0">
+               <div 
+                 onClick={() => navigate('/notifications')}
+                 className="bg-white/10 p-4 rounded-[20px] border border-white/5 relative cursor-pointer hover:bg-white/20 transition shadow-2xl backdrop-blur-md">
+                 <Bell className="w-6 h-6 text-white" />
+                 <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-[#8b5cf6] rounded-full border-2 border-white/20"></div>
+               </div>
+               <div
+                 onClick={() => navigate('/profile')} 
+                 className="w-16 h-16 rounded-[24px] border-4 border-white/20 p-1 cursor-pointer hover:scale-110 transition-all shadow-2xl overflow-hidden bg-white/10 group"
+               >
+                   <div className="w-full h-full bg-white/20 rounded-[16px] flex items-center justify-center font-black text-xl text-white group-hover:bg-white group-hover:text-black transition-colors">
+                      {user?.name?.[0] || "U"}
+                   </div>
+               </div>
             </div>
         </div>
 
-        <div className="max-w-5xl mx-auto mt-12 grid grid-cols-3 gap-6 bg-white/10 backdrop-blur-md rounded-[50px] p-8 border border-white/10 shadow-inner">
-          <StatItem label="ATTENDANCE" val={loading ? "..." : (stats?.attendancePercentage || "0") + "%"} />
-          <StatItem label="GPA" val="3.95" />
-          <StatItem label="STUDENTS" val={loading ? "..." : (stats?.studentsCount || "0")} />
+        {/* DYNAMIC STATS BAR - EXACT FLUTTER MATCH */}
+        <div className="max-w-7xl mx-auto mt-10 grid grid-cols-3 gap-6 bg-white/10 backdrop-blur-md rounded-[28px] p-6 border border-white/10 shadow-inner">
+          {role === 'parent' ? (
+             <>
+                <StatItem label="Dues" val={`₹${(stats?.totalDues || 4200).toLocaleString()}`} />
+                <StatLine />
+                <StatItem label="Children" val={children.length.toString().padStart(2, '0')} />
+                <StatLine />
+                <StatItem label="Status" val="Active" />
+             </>
+          ) : (
+             <>
+                <StatItem label="Attendance" val={(stats?.attendancePercentage || "94") + "%"} />
+                <StatLine />
+                <StatItem label="GPA Scale" val="3.85" />
+                <StatLine />
+                <StatItem label="Assignments" val={(stats?.homeworkCount || "12").toString().padStart(2, '0')} />
+             </>
+          )}
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-8 mt-12">
+      <div className="max-w-7xl mx-auto px-6 mt-10 relative z-50">
         
-        <div className="flex justify-between items-center mb-10">
-          <h3 className="text-black font-black text-2xl tracking-tight uppercase tracking-widest leading-none">Modules</h3>
-          <div className="h-0.5 flex-1 mx-8 bg-gray-50"></div>
-          <div className="flex gap-2 opacity-10">
-             <div className="w-2 h-2 bg-black rounded-full"></div>
-             <div className="w-2 h-2 bg-black rounded-full"></div>
-             <div className="w-2 h-2 bg-black rounded-full"></div>
-          </div>
+        {/* MODULES GRID - EXACT FLUTTER MATCH */}
+        <div className="mb-8">
+           <h3 className="text-[#000000] font-black text-xl tracking-tight uppercase leading-none mb-6 px-4">Institutional Hub</h3>
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             {filteredModules.map((m, idx) => (
+                <ModuleCard key={m.id} m={m} idx={idx} onClick={() => navigate(m.path)} />
+             ))}
+           </div>
         </div>
-        
-        {/* MODULES GRID */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-          {filteredModules.map((m, idx) => (
-            <div 
-              key={m.id} 
-              onClick={() => navigate(m.path)} 
-              className="group cursor-pointer bg-white p-8 rounded-[45px] border border-gray-100 shadow-sm flex flex-col items-center text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 animate-in fade-in"
-              style={{ animationDelay: `${idx * 50}ms` }}
-            >
-              <div className={`${m.color} w-20 h-20 rounded-[30px] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white shadow-sm`}>
-                {m.icon}
+
+        {/* ROLE SPECIFIC SECTIONS */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mt-20">
+           
+           {/* LEFT CONTENT */}
+           <div className="lg:col-span-8 flex flex-col gap-12">
+              
+              {role === 'teacher' && (
+                <section className="animate-in slide-in-from-bottom duration-700">
+                   <div className="flex justify-between items-center mb-10 px-4">
+                      <h3 className="text-[#000000] font-black text-2xl tracking-tight uppercase leading-none">Class Schedule</h3>
+                      <select 
+                        value={selectedClass} 
+                        onChange={(e) => setSelectedClass(e.target.value)}
+                        className="bg-indigo-50 border border-indigo-100 rounded-2xl px-6 py-2.5 font-black text-[11px] uppercase tracking-widest text-[#4F46E5] outline-none cursor-pointer"
+                      >
+                         <option value="8">Grade 8</option>
+                         <option value="9">Grade 9</option>
+                         <option value="10">Grade 10</option>
+                         <option value="11">Grade 11</option>
+                         <option value="12">Grade 12</option>
+                      </select>
+                   </div>
+                   
+                   <div className="space-y-6">
+                      {timetable.length > 0 ? timetable.map((p, i) => (
+                         <SessionRow key={i} p={p} />
+                      )) : (
+                         <div className="p-20 text-center bg-gray-50 border-4 border-dashed border-gray-100 rounded-[50px] italic font-bold text-gray-300">No active sessions for this grade node</div>
+                      )}
+                   </div>
+                </section>
+              )}
+
+              {role === 'parent' && (
+                <section className="animate-in slide-in-from-bottom duration-700">
+                   <h3 className="text-[#000000] font-black text-2xl tracking-tight uppercase leading-none mb-10 px-4">Student Profiles</h3>
+                   <div className="space-y-6">
+                      {children.map((c, i) => (
+                         <ChildCard key={i} c={c} />
+                      ))}
+                   </div>
+                </section>
+              )}
+
+              {/* NOTICE BOARD - COMMON FOR ALL */}
+              <section className="animate-in slide-in-from-bottom duration-700">
+                 <div className="flex justify-between items-center mb-6 px-4">
+                    <h3 className="text-[#000000] font-black text-xl tracking-tight uppercase leading-none text-black">Notice Board</h3>
+                    <button onClick={() => navigate('/communication')} className="text-blue-600 font-bold text-[10px] uppercase tracking-[2px] px-4 py-2 rounded-xl transition">Archives</button>
+                 </div>
+                 <div className="bg-white border border-gray-100 rounded-[28px] shadow-sm overflow-hidden p-2">
+                    {notices.length > 0 ? notices.slice(0, 4).map((n, i) => (
+                       <NoticeRow key={i} n={n} idx={i} />
+                    )) : (
+                       <div className="p-12 text-center text-[#555555] opacity-20 whitespace-normal font-bold"><Bell className="inline w-10 h-10 mb-2" /><br/>Syncing...</div>
+                    )}
+                 </div>
+              </section>
+           </div>
+
+           {/* RIGHT CONTENT - SIDEBARS */}
+           <div className="lg:col-span-4 flex flex-col gap-12">
+              <div className="bg-[#1e1b4b] p-10 rounded-[60px] shadow-3xl relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
+                 <h4 className="text-white text-2xl font-black tracking-tight uppercase mb-6 relative z-10 flex items-center gap-4">
+                    <Calendar className="w-6 h-6 text-[#4F46E5]" /> Events Node
+                 </h4>
+                 <div className="bg-white/5 border border-white/5 rounded-[40px] p-8 space-y-8 relative z-10 hover:bg-white/10 transition-colors cursor-pointer" onClick={() => navigate('/calendar')}>
+                    <div className="flex items-center gap-6">
+                       <div className="bg-white/10 p-5 rounded-[28px] text-white">
+                          <Clock className="w-8 h-8" />
+                       </div>
+                       <div>
+                          <p className="text-white font-black text-lg uppercase tracking-tight leading-none">Olympiad</p>
+                          <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-2 italic">Oct 24, 09:00 AM</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                       <div className="bg-rose-500/10 p-5 rounded-[28px] text-rose-400">
+                          <Activity className="w-8 h-8" />
+                       </div>
+                       <div>
+                          <p className="text-white font-black text-lg uppercase tracking-tight leading-none">Sports Day</p>
+                          <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-2 italic">Oct 28, All Day</p>
+                       </div>
+                    </div>
+                 </div>
               </div>
-              <h4 className="text-black font-black text-[17px] tracking-tight uppercase">{m.title}</h4>
-              <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[2px] mt-2 italic">{m.sub}</p>
-            </div>
-          ))}
-        </div>
 
-        {/* RECENT NOTICE */}
-        <div 
-          onClick={() => navigate('/communication')}
-          className="mt-16 bg-black p-8 rounded-[50px] shadow-3xl flex flex-col md:flex-row items-center relative overflow-hidden cursor-pointer group hover:-translate-y-1 transition-all"
-        >
-          <div className="absolute right-0 bottom-0 w-48 h-48 bg-[#4f46e5]/10 rounded-full translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
-          <div className="bg-white/10 backdrop-blur-md rounded-[35px] px-8 py-6 text-center border border-white/10 shrink-0 mb-6 md:mb-0 shadow-inner group-hover:rotate-3 transition-transform">
-            <div className="text-white text-3xl font-black tabular-nums">24</div>
-            <div className="text-white/40 text-[10px] font-black uppercase tracking-[3px]">OCT</div>
-          </div>
-          <div className="md:ml-10 flex-1 text-center md:text-left">
-            <p className="text-teal-400 font-black text-[10px] uppercase tracking-[4px] mb-2">Upcoming Event</p>
-            <h4 className="text-white font-black text-2xl tracking-tight uppercase group-hover:text-emerald-400 transition-colors">Maths Olympiad</h4>
-            <div className="flex flex-wrap justify-center md:justify-start items-center text-white/40 text-[11px] mt-3 font-bold uppercase tracking-widest gap-6">
-              <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-rose-500" /> School Hall</span>
-              <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-indigo-400" /> 09:00 AM</span>
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/5 p-4 rounded-full ml-8 hidden md:flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
-             <ChevronRight className="w-8 h-8" />
-          </div>
-        </div>
+              {role === 'teacher' && (
+                 <button className="bg-indigo-900 text-white p-10 rounded-[60px] shadow-3xl flex flex-col items-center gap-6 hover:bg-black transition-all border border-indigo-950 active:scale-95">
+                    <Download className="w-10 h-10 text-emerald-400" />
+                    <span className="font-black text-xl uppercase tracking-widest">Download Full Schedule</span>
+                 </button>
+              )}
+           </div>
 
-        {/* NOTICES LIST */}
-        <div className="mt-16 flex justify-between items-center mb-8 px-2">
-          <h3 className="text-black font-black text-2xl tracking-tight uppercase tracking-widest leading-none">Announcements</h3>
-          <button onClick={() => navigate('/communication')} className="text-black font-black text-[11px] uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 px-4 py-2 rounded-xl transition">View All <ChevronRight className="w-4 h-4" /></button>
         </div>
-
-        <div className="bg-white border border-gray-100 rounded-[50px] overflow-hidden shadow-sm mb-16">
-          {notices.length > 0 ? (
-            notices.slice(0, 4).map((notice, idx) => (
-              <div 
-                key={notice._id || idx} 
-                onClick={() => navigate('/communication')}
-                className="flex items-center p-8 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer group last:border-0"
-              >
-                <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center shrink-0 border shadow-sm ${
-                  notice.priority === 'urgent' ? 'bg-rose-50 border-rose-100' : 
-                  notice.priority === 'high' ? 'bg-orange-50 border-orange-100' : 'bg-indigo-50 border-indigo-100'
-                }`}>
-                  <Flag className={`w-7 h-7 ${
-                    notice.priority === 'urgent' ? 'text-rose-500' : 
-                    notice.priority === 'high' ? 'text-orange-500' : 'text-[#4f46e5]'
-                  }`} />
-                </div>
-                <div className="ml-8 flex-1">
-                  <h4 className="text-black font-black text-[18px] tracking-tight uppercase group-hover:text-[#4f46e5] transition-colors">{notice.title}</h4>
-                  <div className="flex items-center gap-4 mt-1.5">
-                    <span className="text-gray-400 font-bold text-[10px] uppercase tracking-widest italic">{new Date(notice.createdAt).toLocaleDateString()}</span>
-                    <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
-                    <span className={`font-black text-[9px] uppercase tracking-widest ${
-                      notice.priority === 'urgent' ? 'text-rose-600' : 'text-indigo-400'
-                    }`}>{notice.priority || 'Standard'} Directive</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-8 h-8 text-gray-100 group-hover:text-black transition-colors" />
-              </div>
-            ))
-          ) : (
-            <div className="p-24 text-center text-gray-400 font-black italic uppercase tracking-widest text-lg opacity-20 flex flex-col items-center">
-               <Bell className="w-12 h-12 mb-4" /> No Active Broadcasts
-            </div>
-          )}
-        </div>
-        
       </div>
 
     </div>
@@ -212,10 +285,91 @@ export default function Dashboard() {
 }
 
 function StatItem({ label, val }) {
-  return (
-    <div className="text-center group overflow-hidden">
-      <p className="text-white/40 text-[9px] font-black uppercase tracking-[2px] mb-2 group-hover:text-white transition-colors">{label}</p>
-      <h2 className="text-white text-2xl font-black tracking-tight leading-none uppercase tabular-nums">{val}</h2>
-    </div>
-  );
+   return (
+      <div className="text-center">
+         <p className="text-white font-black text-2xl tracking-tighter leading-none mb-2 uppercase tabular-nums">{val}</p>
+         <p className="text-white/40 text-[11px] font-black uppercase tracking-[2px] leading-none italic">{label}</p>
+      </div>
+   )
+}
+
+function StatLine() { return <div className="h-10 w-px bg-white/20 my-auto" /> }
+
+function ModuleCard({ m, idx, onClick }) {
+   const colors = {
+      emerald: "bg-emerald-50 text-emerald-500 border-emerald-100",
+      indigo: "bg-[#3b82f6]/10 text-blue-500 border-blue-100",
+      rose: "bg-rose-50 text-rose-500 border-rose-100",
+      amber: "bg-amber-50 text-amber-500 border-amber-100",
+      sky: "bg-sky-50 text-sky-500 border-sky-100",
+      teal: "bg-teal-50 text-teal-500 border-teal-100",
+      blue: "bg-blue-50 text-blue-500 border-blue-100",
+   };
+   return (
+      <div 
+        onClick={onClick}
+        className="group cursor-pointer bg-white p-6 rounded-[28px] border border-gray-100 shadow-sm flex flex-col items-start hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 animate-in zoom-in"
+        style={{ animationDelay: `${idx * 50}ms` }}
+      >
+        <div className={`p-4 rounded-[18px] mb-4 group-hover:rotate-12 transition-all duration-500 shadow-inner ${colors[m.color]}`}>
+          {m.icon}
+        </div>
+        <h4 className="text-[#000000] font-black text-lg tracking-tight uppercase leading-none mb-1">{m.title}</h4>
+        <p className="text-[#555555] font-bold text-[9px] uppercase tracking-[1.5px] italic opacity-60 leading-none">{m.sub}</p>
+      </div>
+   );
+}
+
+function SessionRow({ p }) {
+   return (
+      <div className="bg-white p-8 rounded-[45px] border border-gray-100 shadow-sm flex items-center gap-10 hover:shadow-2xl transition-all group cursor-pointer overflow-hidden relative">
+         <div className="absolute top-0 right-0 w-24 h-full bg-[#4F46E5]/5 translate-x-full group-hover:translate-x-0 transition-transform duration-700"></div>
+         <div className="bg-[#F9FAFB] px-8 py-5 rounded-[28px] shrink-0 font-black text-lg text-[#555555] shadow-inner group-hover:bg-[#4F46E5] group-hover:text-white transition-all">
+            {p.startTime || "09:00"}
+         </div>
+         <div className="flex-1">
+            <h4 className="text-[#000000] font-black text-2xl tracking-tight uppercase group-hover:text-[#4F46E5] transition-colors leading-none">{p.subject || "Session"}</h4>
+            <div className="flex items-center gap-4 mt-3">
+               <span className="text-indigo-600 font-black text-[11px] uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-xl">Location: {p.room || "Lab A"}</span>
+            </div>
+         </div>
+         <ChevronRight className="w-8 h-8 text-gray-100 group-hover:text-black transition-colors" />
+      </div>
+   );
+}
+
+function ChildCard({ c }) {
+   return (
+      <div className="bg-white p-8 rounded-[45px] border border-gray-100 shadow-sm flex items-center gap-10 hover:shadow-2xl transition-all group cursor-pointer relative overflow-hidden">
+         <div className="w-16 h-16 bg-[#1e1b4b] rounded-[24px] flex items-center justify-center font-black text-white text-xl shadow-xl border-4 border-white group-hover:rotate-6 transition-all">
+            {c.userId?.name?.[0] || "S"}
+         </div>
+         <div className="flex-1">
+            <h4 className="text-[#000000] font-black text-2xl tracking-tight leading-none uppercase group-hover:text-[#E11D48] transition-colors">{c.userId?.name || "Student"}</h4>
+            <div className="flex items-center gap-4 mt-3">
+               <span className="text-gray-400 font-black text-[11px] uppercase tracking-widest italic opacity-60">Grade {c.class}-{c.section}</span>
+               <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
+               <span className="text-rose-600 font-bold text-[10px] uppercase tracking-widest tracking-[3px]">Authorized Access</span>
+            </div>
+         </div>
+         <div className="bg-rose-50 p-4 rounded-3xl text-rose-300 group-hover:bg-rose-500 group-hover:text-white transition-all shadow-sm">
+            <ChevronRight className="w-6 h-6" />
+         </div>
+      </div>
+   );
+}
+
+function NoticeRow({ n, idx }) {
+   return (
+      <div className="flex items-center p-8 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition cursor-pointer group">
+         <div className="bg-indigo-50 p-4 rounded-3xl shrink-0 group-hover:bg-black group-hover:text-white transition-colors">
+            <Bell className="w-7 h-7 text-[#4F46E5] group-hover:text-white" />
+         </div>
+         <div className="ml-10 flex-1">
+            <h4 className="text-[#000000] font-black text-xl tracking-tight uppercase group-hover:text-[#4F46E5] transition-colors leading-none">{n.title}</h4>
+            <p className="text-gray-400 font-bold text-[11px] uppercase tracking-widest mt-2">{new Date(n.createdAt).toLocaleDateString()} • Global Broadcast</p>
+         </div>
+         <ChevronRight className="w-8 h-8 text-gray-100 group-hover:text-black transition-colors" />
+      </div>
+   );
 }

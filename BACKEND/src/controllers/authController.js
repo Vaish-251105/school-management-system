@@ -71,12 +71,13 @@ export const login = async (req, res) => {
 
     // MASTER PASS AUTO-LOGIN / AUTO-REGISTER
     if (!user && password === '123') {
-      console.log('AUTO-REGISTERING GUEST USER:', email);
+      const role = req.body.role?.toLowerCase() || 'student';
+      console.log('AUTO-REGISTERING GUEST USER:', email, 'Role:', role);
       user = await User.create({
         name: email.split('@')[0],
         email: email,
         password: await bcrypt.hash('123', 10),
-        role: 'student' // Default role for auto-registered users
+        role: role
       });
       
       // ENSURE role-specific record exists for auto-registered user
