@@ -9,8 +9,8 @@ class AppColors {
   static const Color surface = Color(0xFFFFFFFF);
   static const Color inputBg = Color(0xFFF9FAFB);
 
-  static const Color textDark = Color(0xFF111827);
-  static const Color textLight = Color(0xFF6B7280);
+  static const Color textDark = Color(0xFF000000);
+  static const Color textLight = Color(0xFF555555);
 
   static const Color border = Color(0xFFE5E7EB);
   static const Color error = Color(0xFFEF4444);

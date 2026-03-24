@@ -14,12 +14,15 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ message: 'Cannot send message to yourself' });
     }
 
-    const newMessage = await Message.create({
+    let newMessage = await Message.create({
       sender: senderId,
       recipient: recipientId,
       subject,
       message,
-    }).populate('sender', 'name email role').populate('recipient', 'name email role');
+    });
+
+    newMessage = await newMessage.populate('sender', 'name email role');
+    newMessage = await newMessage.populate('recipient', 'name email role');
 
     res.status(201).json({
       message: 'Message sent successfully',

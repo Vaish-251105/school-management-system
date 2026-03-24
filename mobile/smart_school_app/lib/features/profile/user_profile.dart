@@ -16,224 +16,199 @@ class UserProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          /// TOP BACKGROUND
-          Container(
-            height: 350,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.secondary, AppColors.primary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 320,
+            pinned: true,
+            stretch: true,
+            backgroundColor: AppColors.primary,
+            leading: IconButton(
+              icon: const Icon(LucideIcons.chevronLeft, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
-          ),
-
-          /// APP BAR (Custom)
-          Positioned(
-            top: 60, left: 10, right: 10,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                   onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(LucideIcons.chevronLeft, color: Colors.white, size: 24),
+            flexibleSpace: FlexibleSpaceBar(
+              stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.secondary, AppColors.primary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
-                const Text("Account Intelligence", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(LucideIcons.moreVertical, color: Colors.white, size: 24),
-                ),
-              ],
-            ),
-          ),
-
-          /// MAIN CARD
-          Positioned(
-            top: 140,
-            left: 20, right: 20, bottom: 0,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 40),
-              child: Column(
-                children: [
-                  /// PROFILE HEADER CARD
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))],
-                    ),
-                    child: Column(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 40),
+                    Stack(
                       children: [
-                        Stack(
-                          children: [
-                            Container(
-                              width: 100, height: 100,
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                              child: CircleAvatar(
-                                backgroundColor: isDark ? Colors.white10 : Colors.grey.shade100,
-                                backgroundImage: NetworkImage("https://ui-avatars.com/api/?name=${user.name}&background=4f46e5&color=ffffff&size=128"),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0, right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(color: theme.colorScheme.surface, shape: BoxShape.circle),
-                                child: const Icon(LucideIcons.checkCircle, color: Colors.indigo, size: 24),
-                              ),
-                            )
-                          ],
+                        Container(
+                          width: 110,
+                          height: 110,
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white24),
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundImage: NetworkImage("https://ui-avatars.com/api/?name=${user.name}&background=4f46e5&color=ffffff&size=128"),
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(user.name, textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: theme.primaryColor.withOpacity(0.05))),
-                              child: Text(user.role.toUpperCase(), style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.8)),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(20)),
-                              child: const Text("PRO VERSION", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.8)),
-                            ),
-                          ],
-                        ),
-                        
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Divider(color: theme.dividerColor.withOpacity(0.05), height: 1),
-                        ),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildProfileStat(context, "ACTIVE", "Status"),
-                            _buildProfileStat(context, "OCT 24", "Term"),
-                            _buildProfileStat(context, "4.9", "Rating"),
-                          ],
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                            child: const Icon(LucideIcons.check, color: Colors.white, size: 16),
+                          ),
                         )
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  /// PERSONAL INFO
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Institutional Credentials", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.4)),
-                      const Text("SECURED", style: TextStyle(fontSize: 9, color: AppColors.textLight, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildInfoTile(context, LucideIcons.mail, "Institutional Email", user.email),
-                  _buildInfoTile(context, LucideIcons.phone, "System Phone", "+1 (555) 0123-4567"),
-                  _buildInfoTile(context, LucideIcons.shieldCheck, "Security Tier", "Access Level: ${user.role}"),
-                  _buildInfoTile(context, LucideIcons.badgeCheck, "Database UID", user.userId),
-
-                  const SizedBox(height: 30),
-
-                  /// BUTTONS
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ID Synchronized to Secure Wallet"))),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        elevation: 10, shadowColor: AppColors.primary.withOpacity(0.4)
-                      ),
-                      icon: const Icon(LucideIcons.qrCode, color: Colors.white),
-                      label: const Text("Generate Digital ID", style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    Text(
+                      user.name,
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                         context.read<AuthService>().logout();
-                         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.redAccent, width: 1.5),
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      ),
-                      icon: const Icon(LucideIcons.logOut, color: Colors.redAccent, size: 20),
-                      label: const Text("Terminate Session", style: TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.role.toUpperCase(),
+                      style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildHeaderStat("OCT 24", "Current Term"),
+                      _buildHeaderStat("ACTIVE", "Status"),
+                      _buildHeaderStat("PRO", "Account"),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    "INSTITUTIONAL INFORMATION",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textLight, letterSpacing: 1.1),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDetailTile(context, LucideIcons.mail, "Official Email", user.email),
+                  _buildDetailTile(context, LucideIcons.user, "Role Profile", user.role.toUpperCase()),
+                  
+                  if (user.role == 'student') ...[
+                    _buildDetailTile(context, LucideIcons.hash, "Roll Number", "#${user.details['rollNumber'] ?? 'N/A'}"),
+                    _buildDetailTile(context, LucideIcons.book, "Current Class", "Grade ${user.details['class'] ?? 'N/A'} - ${user.details['section'] ?? 'A'}"),
+                  ],
+                  if (user.role == 'teacher') ...[
+                    _buildDetailTile(context, LucideIcons.award, "Designation", user.details['subject'] ?? 'Senior Faculty'),
+                    _buildDetailTile(context, LucideIcons.briefcase, "Experience", "${user.details['experience'] ?? 0} Years"),
+                  ],
+
+                  _buildDetailTile(context, LucideIcons.calendar, "Registered date", "Sep 2024"),
+                  _buildDetailTile(context, LucideIcons.shieldCheck, "Database ID", user.id),
+
+                  const SizedBox(height: 32),
+                  const Text(
+                    "ACCOUNT ACTIONS",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textLight, letterSpacing: 1.1),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  _buildActionBtn(
+                    context, 
+                    "Update Security Credentials", 
+                    LucideIcons.lock, 
+                    Colors.blue,
+                    () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Security settings are managed by Admin")))
+                  ),
+                   _buildActionBtn(
+                    context, 
+                    "Export Digital Identity", 
+                    LucideIcons.download, 
+                    Colors.green,
+                    () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Digital ID generated successfully")))
+                  ),
+                   _buildActionBtn(
+                    context, 
+                    "Terminate All Sessions", 
+                    LucideIcons.logOut, 
+                    Colors.redAccent,
+                    () {
+                       context.read<AuthService>().logout();
+                       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                    }
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildProfileStat(BuildContext context, String val, String label) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildHeaderStat(String val, String label) {
     return Column(
       children: [
-        Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : AppColors.textDark)),
+        Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: AppColors.textLight, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        Text(label, style: const TextStyle(color: AppColors.textLight, fontSize: 10, fontWeight: FontWeight.bold)),
       ],
     );
   }
 
-  Widget _buildInfoTile(BuildContext context, IconData icon, String title, String val) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
+  Widget _buildDetailTile(BuildContext context, IconData icon, String title, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.03)),
+        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.08), shape: BoxShape.circle),
-            child: Icon(icon, color: theme.primaryColor, size: 20),
+            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: AppColors.textLight, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.2)),
+                Text(title, style: const TextStyle(fontSize: 10, color: AppColors.textLight, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
-                Text(val, style: TextStyle(color: isDark ? Colors.white : AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               ],
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionBtn(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        onTap: onTap,
+        tileColor: color.withOpacity(0.05),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        leading: Icon(icon, color: color),
+        title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 14)),
+        trailing: Icon(Icons.chevron_right, color: color),
       ),
     );
   }

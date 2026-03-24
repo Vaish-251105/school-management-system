@@ -115,8 +115,16 @@ class _ParentDashboardState extends State<ParentDashboard> {
                               child: const CircleAvatar(
                                 radius: 26,
                                 backgroundColor: Colors.white24,
-                                child: Icon(LucideIcons.user, color: Colors.white, size: 22),
+                                child: Icon(LucideIcons.user, color: Colors.white, size: 20),
                               ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: () {
+                                context.read<AuthService>().logout();
+                                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                              },
+                              icon: const Icon(LucideIcons.logOut, color: Colors.white, size: 20),
                             ),
                           ],
                         ),
@@ -161,7 +169,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     const SizedBox(height: 16),
                     if (_children.isEmpty && !_isLoading)
                        const Center(child: Text("No children records linked yet")),
-                    ..._children.map((child) => _buildChildTile(
+                    ..._children.map<Widget>((child) => _buildChildTile(
                       child['userId']?['name'] ?? child['name'] ?? "Student", 
                       "Grade ${child['class'] ?? 'N/A'}-${child['section'] ?? 'A'}", 
                       "ID: ${(child['_id'] ?? '...').toString().substring(0,6).toUpperCase()}", 

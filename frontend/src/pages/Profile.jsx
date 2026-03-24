@@ -16,7 +16,11 @@ import {
   ShieldCheck,
   Briefcase,
   Layers,
-  Star
+  Star,
+  Globe,
+  Activity,
+  Award,
+  ChevronRight
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -31,131 +35,167 @@ export default function Profile() {
   };
 
   const getRoleBadge = () => {
+    const r = user.role?.toLowerCase() || 'student';
     const roles = {
-      admin: { color: "bg-rose-50 text-rose-600 border-rose-100", icon: <ShieldCheck className="w-3 h-3" />, label: "Administrator" },
-      teacher: { color: "bg-blue-50 text-blue-600 border-blue-100", icon: <GraduationCap className="w-3 h-3" />, label: "Faculty" },
-      student: { color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: <UserIcon className="w-3 h-3" />, label: "Student" },
-      accountant: { color: "bg-amber-50 text-amber-600 border-amber-100", icon: <Briefcase className="w-3 h-3" />, label: "Finance Staff" },
-      parent: { color: "bg-indigo-50 text-indigo-600 border-indigo-100", icon: <Layers className="w-3 h-3" />, label: "Guardian" }
+      admin: { color: "bg-red-50 text-red-600 border-red-100", icon: <ShieldCheck className="w-4 h-4" />, label: "Administrator" },
+      teacher: { color: "bg-indigo-50 text-indigo-600 border-indigo-100", icon: <GraduationCap className="w-4 h-4" />, label: "Teacher" },
+      student: { color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: <UserIcon className="w-4 h-4" />, label: "Student" },
+      accountant: { color: "bg-amber-50 text-amber-600 border-amber-100", icon: <Briefcase className="w-4 h-4" />, label: "Accountant" },
+      parent: { color: "bg-purple-50 text-purple-600 border-purple-100", icon: <Layers className="w-4 h-4" />, label: "Parent" }
     };
-    return roles[user.role] || { color: "bg-gray-50 text-gray-600 border-gray-100", icon: <UserIcon className="w-3 h-3" />, label: user.role };
+    return roles[r] || { color: "bg-gray-50 text-gray-600 border-gray-100", icon: <UserIcon className="w-4 h-4" />, label: user.role };
   };
 
   const badge = getRoleBadge();
 
   return (
-    <div className="bg-[#f9fafb] min-h-screen font-sans flex flex-col relative pb-10 text-gray-900">
+    <div className="bg-[#fafafa] min-h-screen font-sans animate-in fade-in transition-all pb-24">
       
-      {/* BACKGROUND GRADIENT */}
-      <div className="absolute top-0 left-0 w-full h-[350px] bg-gradient-to-br from-[#4338ca] to-[#4f46e5] z-0 overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+      {/* HEADER BACKGROUND */}
+      <div className="absolute top-0 left-0 w-full h-[400px] bg-[#1e1b4b] z-0 rounded-b-[60px] shadow-2xl overflow-hidden">
+         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px]"></div>
       </div>
 
       {/* HEADER BAR */}
-      <div className="relative z-10 px-6 pt-12 pb-4 flex justify-between items-center max-w-4xl mx-auto w-full">
+      <div className="relative z-10 px-8 pt-12 pb-6 max-w-5xl mx-auto flex justify-between items-center text-white">
         <button 
           onClick={() => navigate(-1)}
-          className="bg-white/10 border border-white/20 p-2 rounded-xl text-white hover:bg-white/20 transition backdrop-blur-md">
-          <ChevronLeft className="w-5 h-5" />
+          className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl backdrop-blur-md active:scale-95 group">
+          <ChevronLeft className="w-7 h-7 text-white" />
         </button>
-        <h1 className="text-white text-lg font-bold">Account Intelligence</h1>
+        <h1 className="text-white text-xl font-black uppercase tracking-[3px]">My Profile</h1>
         <button 
-          onClick={() => alert("Profile settings are restricted for your role.")}
-          className="bg-white/10 border border-white/20 p-2 rounded-xl text-white hover:bg-white/20 transition backdrop-blur-md">
-          <MoreVertical className="w-5 h-5" />
+          onClick={() => alert("Profile editing is currently locked.")}
+          className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl">
+          <MoreVertical className="w-7 h-7 text-white" />
         </button>
       </div>
 
-      {/* BODY CONTENT */}
-      <div className="max-w-xl mx-auto px-6 mt-8 w-full relative z-10 flex-1">
+      <div className="max-w-5xl mx-auto px-8 mt-12 relative z-10">
         
-        {/* MAIN PROFILE CARD */}
-        <div className="bg-white rounded-[32px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.06)] mb-8 flex flex-col items-center text-center border border-white">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           
-          <div className="relative mb-6">
-            <div className="w-28 h-28 bg-gradient-to-tr from-indigo-50 to-white rounded-full border-4 border-white shadow-xl flex items-center justify-center overflow-hidden">
-               <img 
-                 src={`https://ui-avatars.com/api/?name=${user.name || "User"}&background=4f46e5&color=ffffff&size=128`} 
-                 alt="Avatar" 
-                 className="w-full h-full object-cover"
-               />
-            </div>
-            <div className="absolute bottom-1 right-1 bg-white rounded-full p-1 shadow-lg ring-4 ring-white">
-              <Verified className="w-6 h-6 text-indigo-600 fill-current bg-white rounded-full" />
-            </div>
+          {/* LEFT: IDENTITY CARD */}
+          <div className="lg:col-span-1">
+             <div className="bg-white rounded-[50px] p-10 shadow-3xl flex flex-col items-center text-center border border-gray-100 animate-in slide-in-from-bottom duration-700">
+                <div className="relative mb-10">
+                  <div className="w-40 h-40 bg-[#1e1b4b] rounded-[45px] border-[6px] border-white shadow-2xl overflow-hidden p-1">
+                     <img 
+                       src={`https://ui-avatars.com/api/?name=${user.name || "UN"}&background=1e1b4b&color=ffffff&size=256&bold=true`} 
+                       alt="Avatar" 
+                       className="w-full h-full object-cover rounded-[35px]"
+                     />
+                  </div>
+                  <div className="absolute -bottom-4 -right-4 bg-emerald-500 p-4 rounded-2xl shadow-2xl border-4 border-white">
+                     <Verified className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+
+                <h2 className="text-3xl font-black text-black tracking-tight leading-tight uppercase">{user.name || "User"}</h2>
+                <div className={`mt-6 inline-flex items-center gap-2 border-2 px-6 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${badge.color}`}>
+                   {badge.icon}
+                   {badge.label}
+                </div>
+
+                <div className="w-full grid grid-cols-2 gap-4 mt-12 pt-8 border-t border-gray-50">
+                   <div className="text-center">
+                      <p className="text-black font-black text-xl mb-0.5 tracking-tight">1,240</p>
+                      <p className="text-gray-400 font-bold text-[9px] uppercase tracking-widest">Points</p>
+                   </div>
+                   <div className="text-center">
+                      <p className="text-black font-black text-xl mb-0.5 tracking-tight">98%</p>
+                      <p className="text-gray-400 font-bold text-[9px] uppercase tracking-widest">Attendance</p>
+                   </div>
+                </div>
+
+                <button 
+                  onClick={logout}
+                  className="mt-10 w-full bg-red-50 text-red-500 py-6 rounded-3xl font-black flex items-center justify-center gap-3 transition-all hover:bg-red-500 hover:text-white active:scale-95 shadow-sm uppercase tracking-widest text-[12px]">
+                  <LogOut className="w-5 h-5" /> Logout Session
+                </button>
+             </div>
           </div>
 
-          <h2 className="text-2xl font-black text-gray-900 mb-2">{user.name || "User Name"}</h2>
-          
-          <div className="flex gap-2 justify-center mb-6">
-            <div className={`flex items-center gap-1.5 border px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest ${badge.color}`}>
-               {badge.icon}
-               {badge.label}
-            </div>
-            <div className="bg-gray-900 text-white font-black text-[10px] px-3 py-1.5 rounded-full uppercase tracking-widest">PRO</div>
+          {/* RIGHT: DETAILS & SECURITY */}
+          <div className="lg:col-span-2 space-y-8 animate-in slide-in-from-bottom duration-1000">
+             
+             {/* QUICK STATS */}
+             <div className="bg-white/10 backdrop-blur-md rounded-[50px] p-8 border border-white/10 grid grid-cols-3 gap-6 shadow-2xl">
+                <ProfileStat icon={<Award className="w-6 h-6" />} val="Gold" label="Status" color="text-amber-400" />
+                <ProfileStat icon={<Globe className="w-6 h-6" />} val="Active" label="Network" color="text-teal-400" />
+                <ProfileStat icon={<Activity className="w-6 h-6" />} val="Live" label="Cloud" color="text-emerald-400" />
+             </div>
+
+             <div className="bg-white p-10 rounded-[50px] border border-gray-100 shadow-3xl text-black">
+                <div className="flex justify-between items-center mb-10">
+                   <h3 className="text-black font-black text-2xl tracking-tight uppercase tracking-widest leading-none">Profile Details</h3>
+                   <div className="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-2">
+                     <div className="w-2.5 h-2.5 bg-[#4f46e5] rounded-full animate-pulse"></div>
+                     <span className="text-[#4f46e5] text-[10px] font-black uppercase tracking-widest leading-none">Synced</span>
+                   </div>
+                </div>
+
+                <div className="grid gap-6">
+                   <InfoField icon={<Mail className="w-5 h-5" />} title="Email Address" val={user.email || "node@school.edu"} />
+                   <InfoField icon={<ShieldCheck className="w-5 h-5" />} title="Student ID" val={user._id || "SMS-000"} />
+                   <InfoField icon={<BadgeInfo className="w-5 h-5" />} title="Assigned Role" val={user.role?.toUpperCase() || "USER"} />
+                </div>
+             </div>
+
+             {/* SECURITY BLOCK */}
+             <div className="bg-black p-10 rounded-[50px] shadow-3xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-125 transition duration-700">
+                   <ShieldCheck className="w-32 h-32 text-indigo-400" />
+                </div>
+                <h4 className="text-white text-2xl font-black tracking-tight uppercase mb-4 relative z-10">Security Center</h4>
+                <p className="text-white/40 font-bold text-sm leading-relaxed mb-10 relative z-10">Your account is secured with 256-bit encryption. Contact the administrator hub for any changes to your core identity data.</p>
+                <div className="flex flex-wrap gap-4 relative z-10">
+                   <button 
+                     onClick={() => alert("Digital Identity Key is being generated...")}
+                     className="bg-[#4f46e5] text-white px-8 py-4 rounded-[22px] font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-indigo-700 transition active:scale-95 flex items-center gap-3">
+                      <QrCode className="w-5 h-5" /> Identity Key
+                   </button>
+                   <button 
+                     onClick={() => alert("Redirecting to password reset flow...")}
+                     className="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-[22px] font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition active:scale-95">
+                      Reset Password
+                   </button>
+                </div>
+             </div>
+
           </div>
 
-          <div className="w-full grid grid-cols-3 gap-4 border-t border-gray-50 pt-6">
-             <Stat val="ACTIVE" label="Status" />
-             <Stat val="OCT 24" label="Term" />
-             <Stat val="4.9" label="Score" icon={<Star className="w-3 h-3 text-amber-400 inline mb-1" />} />
-          </div>
-          
-        </div>
-
-        {/* PERSONAL INFO */}
-        <div className="flex justify-between items-center mb-6 px-2">
-          <h3 className="text-indigo-600 font-black text-[14px] uppercase tracking-widest">Institutional Credentials</h3>
-          <span className="text-gray-300 text-[10px] font-bold">SECURED PHASE 2</span>
-        </div>
-
-        <div className="space-y-4 mb-8">
-          <InfoTile icon={<Mail />} title="Verified Email" val={user.email || "N/A"} />
-          <InfoTile icon={<Phone />} title="System Phone" val="+1 (555) 0123-4567" />
-          <InfoTile icon={<UserIcon />} title="User Metadata" val={`Access Token: ${Math.random().toString(36).substring(7).toUpperCase()}`} />
-          <InfoTile icon={<BadgeInfo />} title="Database UID" val={user._id || "ERP-UID-MOCKED"} />
-        </div>
-
-        {/* BUTTONS */}
-        <div className="space-y-4 mb-10">
-          <button 
-            onClick={() => alert("Synchronizing Digital ID to Wallet...")}
-            className="w-full bg-[#4f46e5] text-white py-5 rounded-[24px] font-bold shadow-2xl shadow-indigo-500/40 flex items-center justify-center gap-3 hover:bg-indigo-700 transition active:scale-95 group">
-            <QrCode className="w-6 h-6 group-hover:rotate-12 transition-transform" /> Sync to Digital Wallet
-          </button>
-          
-          <button 
-            onClick={logout}
-            className="w-full bg-white border-2 border-rose-50 text-rose-500 hover:bg-rose-50/50 py-5 rounded-[24px] font-black flex items-center justify-center gap-3 transition active:scale-95 tracking-wide shadow-sm">
-            <LogOut className="w-5 h-5" /> Terminate Session
-          </button>
         </div>
 
       </div>
+
     </div>
   );
 }
 
-function Stat({ val, label, icon }) {
+function ProfileStat({ icon, val, label, color }) {
   return (
-    <div className="text-center group cursor-default">
-      <p className="text-gray-900 font-black text-[16px] mb-0.5 group-hover:text-indigo-600 transition tracking-tighter">{icon}{val}</p>
-      <p className="text-gray-400 font-black text-[9px] uppercase tracking-widest">{label}</p>
+    <div className="flex flex-col items-center text-center group">
+       <div className={`${color} bg-white/5 p-4 rounded-3xl mb-4 group-hover:bg-white group-hover:text-black transition-all duration-500 shadow-inner`}>
+         {icon}
+       </div>
+       <p className="text-white font-black text-lg tracking-tight leading-none mb-1 uppercase">{val}</p>
+       <p className="text-white/40 font-black text-[9px] uppercase tracking-widest">{label}</p>
     </div>
   );
 }
 
-function InfoTile({ icon, title, val }) {
+function InfoField({ icon, title, val }) {
   return (
-    <div className="bg-white p-5 rounded-[24px] flex items-center border border-gray-50 shadow-sm hover:shadow-md transition group overflow-hidden relative">
-      <div className="absolute inset-0 bg-indigo-50/0 group-hover:bg-indigo-50/30 transition-colors pointer-events-none" />
-      <div className="w-12 h-12 bg-white shadow-xl shadow-indigo-500/5 border border-gray-100 rounded-2xl flex items-center justify-center text-indigo-600 z-10">
-        {React.cloneElement(icon, { className: "w-5 h-5" })}
-      </div>
-      <div className="ml-5 z-10 flex-1">
-        <p className="text-gray-300 font-black text-[9px] mb-0.5 uppercase tracking-[0.15em]">{title}</p>
-        <p className="text-gray-800 text-[15px] font-bold truncate">{val}</p>
-      </div>
+    <div className="flex items-center p-6 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-all rounded-[30px] group">
+       <div className="w-14 h-14 bg-indigo-50 text-[#4f46e5] rounded-[24px] flex items-center justify-center shrink-0 border border-indigo-100 group-hover:bg-[#4f46e5] group-hover:text-white transition-all shadow-sm">
+          {icon}
+       </div>
+       <div className="ml-8 flex-1">
+          <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">{title}</p>
+          <p className="text-black font-black text-lg tracking-tight leading-none group-hover:text-[#4f46e5] transition-colors">{val}</p>
+       </div>
+       <ChevronRight className="w-8 h-8 text-gray-100 group-hover:text-black transition-colors" />
     </div>
   );
 }

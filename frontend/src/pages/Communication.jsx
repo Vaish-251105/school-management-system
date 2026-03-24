@@ -8,7 +8,14 @@ import {
   Clock,
   Paperclip,
   Plus,
-  ChevronLeft
+  ChevronLeft,
+  Loader2,
+  GraduationCap,
+  Activity,
+  ChevronRight,
+  Globe,
+  Award,
+  Bell
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
@@ -17,248 +24,226 @@ export default function Communication() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
   const [notices, setNotices] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [homeworks, setHomeworks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchNotices = async () => {
+    const fetchHubData = async () => {
       try {
-        const response = await api.get("/notices");
-        setNotices(Array.isArray(response.data) ? response.data : []);
+        setLoading(true);
+        const [nRes, tRes, hRes] = await Promise.all([
+          api.get("/notices"),
+          api.get("/teachers"),
+          api.get("/homework")
+        ]);
+        setNotices(nRes.data || []);
+        setTeachers(tRes.data || []);
+        setHomeworks(hRes.data || []);
       } catch (err) {
         console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchNotices();
+    fetchHubData();
   }, []);
 
-  const initials = user.name ? user.name.split(' ').map(n => n[0]).join('') : "US";
-
+  if (loading) return (
+     <div className="flex flex-col items-center justify-center min-h-screen bg-[#fafafa]">
+       <Loader2 className="w-12 h-12 animate-spin text-[#4f46e5] mb-6" />
+       <p className="text-gray-400 font-black italic tracking-widest uppercase">Syncing...</p>
+     </div>
+  );
 
   return (
-    <div className="bg-[#fafafa] min-h-screen font-sans flex flex-col pb-28 text-gray-900">
+    <div className="bg-[#fafafa] min-h-screen pb-32 font-sans animate-in fade-in transition-all">
       
       {/* HEADER AREA */}
-      <div className="bg-gradient-to-br from-[#4338ca] to-[#4f46e5] px-6 pt-12 pb-8 rounded-b-[40px] shadow-lg shrink-0 relative overflow-hidden">
-        {/* Soft circle decoration */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-
-        <div className="max-w-4xl mx-auto relative z-10">
-          
-          <div className="flex justify-between items-center w-full mb-8">
-            <div className="flex gap-3 items-center">
-              <button 
-                onClick={() => navigate(-1)}
-                className="bg-white/15 p-2 rounded-xl border border-white/10 hover:bg-white/20 transition">
-                <ChevronLeft className="w-5 h-5 text-white" />
-              </button>
-              <div>
-                <h1 className="text-white text-[24px] font-bold leading-tight">Academic Hub</h1>
-                <p className="text-white/80 text-[12px] mt-0.5">{user.role || "Student"} Hub • Term 1</p>
-              </div>
-            </div>
-            <div 
-              onClick={() => navigate('/profile')}
-              className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition">
-              <span className="text-[#4f46e5] font-bold text-[16px]">{initials}</span>
+      <div className="bg-[#1e1b4b] px-8 pt-12 pb-14 rounded-b-[60px] shadow-2xl relative overflow-hidden shrink-0">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-5xl mx-auto relative z-10 flex justify-between items-center text-white text-center md:text-left">
+          <div className="flex gap-6 items-center animate-in slide-in-from-bottom duration-700">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl backdrop-blur-md active:scale-95 group">
+              <ChevronLeft className="w-7 h-7 text-white" />
+            </button>
+            <div>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-[3px] mb-1">Notice Board</p>
+              <h1 className="text-white text-[32px] font-black leading-tight uppercase tracking-tight">Communication</h1>
             </div>
           </div>
-
-          <div className="bg-white/10 border border-white/20 rounded-2xl py-4 flex justify-around">
-            <div className="text-center">
-              <p className="text-white/70 text-[11px] font-bold mb-1">Attendance</p>
-              <h3 className="text-white text-[16px] font-bold">94%</h3>
-            </div>
-            <div className="text-center">
-              <p className="text-white/70 text-[11px] font-bold mb-1">GPA</p>
-              <h3 className="text-white text-[16px] font-bold">3.82</h3>
-            </div>
-            <div className="text-center">
-              <p className="text-white/70 text-[11px] font-bold mb-1">Rank</p>
-              <h3 className="text-white text-[16px] font-bold">#04</h3>
-            </div>
+          <div className="flex items-center gap-4 hidden md:flex">
+             <button onClick={() => navigate('/notifications')} className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition group shadow-2xl backdrop-blur-md text-white">
+               <Bell className="w-7 h-7" />
+             </button>
           </div>
+        </div>
 
+        <div className="max-w-5xl mx-auto mt-10 relative z-10 animate-in slide-in-from-bottom duration-1000">
+           <div className="grid grid-cols-3 gap-6 bg-white/10 backdrop-blur-md border border-white/10 rounded-[40px] p-8 shadow-inner">
+             <HubStat label="NOTICES" val={notices.length} />
+             <HubStat label="TEACHERS" val={teachers.length} />
+             <HubStat label="SECTION" val="10-A" />
+           </div>
         </div>
       </div>
 
-      {/* BODY CONTENT */}
-      <div className="max-w-4xl mx-auto px-6 mt-6 w-full flex-1">
+      <div className="max-w-5xl mx-auto px-8 mt-12 w-full flex-1 text-black font-sans">
         
-        {/* CHIPS */}
-        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-          <button className="bg-[#4f46e5] border border-[#4f46e5] text-white font-bold px-4 py-2 rounded-xl text-[13px] shrink-0 shadow-sm flex items-center gap-1.5 hover:bg-indigo-600 transition">
-            <Check className="w-4 h-4" /> All Updates
-          </button>
-          <button 
-            onClick={() => alert("Loading messages...")}
-            className="bg-white text-gray-700 font-medium px-4 py-2 rounded-xl text-[13px] shrink-0 border border-gray-200 hover:bg-gray-50 flex items-center gap-1.5 transition">
-            <MessageSquare className="w-4 h-4" /> Messages
-          </button>
-          <button 
-            onClick={() => alert("Loading teacher directory...")}
-            className="bg-white text-gray-700 font-medium px-4 py-2 rounded-xl text-[13px] shrink-0 border border-gray-200 hover:bg-gray-50 flex items-center gap-1.5 transition">
-            <User className="w-4 h-4" /> Teachers
-          </button>
+        {/* NOTICES TIMELINE */}
+        <div className="flex justify-between items-end mb-8">
+           <h3 className="text-black font-black text-2xl tracking-tight uppercase leading-none">Announcements</h3>
+           <div className="bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-2">
+             <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+             <span className="text-emerald-700 text-[10px] font-black uppercase tracking-widest leading-none">Online</span>
+           </div>
         </div>
 
-        {/* NOTICES */}
-        <div className="flex justify-between items-end mb-4">
-          <h3 className="text-gray-900 font-bold text-[18px]">Important Notices</h3>
-          <button 
-             onClick={() => alert("Opening Archive...")}
-            className="text-[#4f46e5] font-medium text-[13px]">View Archive</button>
-        </div>
-
-        <div className="space-y-4 mb-8">
-          {notices.length > 0 ? (
-            notices.map((n) => (
-              <div key={n._id} className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-2xl flex items-start gap-4">
-                <div className="bg-[#4f46e5] w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
-                  <Megaphone className="text-white w-6 h-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 text-[16px]">{n.title}</h4>
-                  <p className="text-gray-800 text-[13px] mt-1.5 leading-relaxed">{n.content}</p>
-                  <div className="flex items-center gap-1.5 text-gray-500 mt-3 font-medium text-[11px]">
-                    <Clock className="w-3.5 h-3.5" /> Posted {new Date(n.createdAt).toLocaleDateString()} by {n.senderId?.name || "Admin"}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-2xl mb-8 flex items-start gap-4">
-              <div className="bg-[#4f46e5] w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
-                <Megaphone className="text-white w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900 text-[16px]">Winter Break Schedule</h4>
-                <p className="text-gray-800 text-[13px] mt-1.5 leading-relaxed">The school will remain closed from Dec 20 to Jan 5. Please ensure all library books are returned before the break.</p>
-                <div className="flex items-center gap-1.5 text-gray-500 mt-3 font-medium text-[11px]">
-                  <Clock className="w-3.5 h-3.5" /> Posted 2 hours ago
-                </div>
-              </div>
+        <div className="space-y-6 mb-16">
+          {notices.length > 0 ? notices.map((n, idx) => (
+             <NoticeItem 
+                key={n._id || idx}
+                idx={idx}
+                title={n.title} 
+                content={n.content} 
+                date={new Date(n.createdAt).toLocaleDateString()} 
+             />
+          )) : (
+            <div className="p-32 text-center bg-gray-50 border-4 border-dashed border-gray-100 rounded-[50px] flex flex-col items-center">
+               <Globe className="w-16 h-16 text-gray-200 mb-6" />
+               <p className="text-gray-400 font-black italic uppercase text-lg">No alerts found</p>
             </div>
           )}
         </div>
 
-
-        {/* INSTRUCTORS */}
-        <div className="flex justify-between items-end mb-4">
-          <h3 className="text-gray-900 font-bold text-[18px]">Your Instructors</h3>
-          <button 
-             onClick={() => alert("Searching instructors...")}
-            className="text-[#4f46e5] font-medium text-[13px]">Directory</button>
+        {/* TEACHERS SECTION */}
+        <div className="flex justify-between items-end mb-8">
+           <h3 className="text-black font-black text-2xl tracking-tight uppercase leading-none">Teachers</h3>
+           <button onClick={() => navigate('/staff')} className="text-[#4f46e5] font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-50 px-4 py-2 rounded-xl transition">
+              See All <ChevronRight className="w-4 h-4" />
+           </button>
         </div>
 
-        <div className="space-y-3 mb-8">
-          <InstructorCard init="SJ" name="Dr. Sarah Jenkins" sub="Advanced Mathematics" email="s.jenkins@school.edu" />
-          <InstructorCard init="MC" name="Prof. Michael Chen" sub="Physics & Robotics" email="m.chen@school.edu" />
+        <div className="grid md:grid-cols-2 gap-6 mb-16">
+          {teachers.length > 0 ? teachers.map((t, idx) => (
+            <FacultyCard 
+              key={t._id || idx}
+              idx={idx}
+              name={t.userId?.name || "Teacher"} 
+              dept={t.department || "Educational Staff"} 
+              init={t.userId?.name?.split(' ').map(n=>n[0]).join('') || "TS"} 
+            />
+          )) : (
+            <FacultyCard name="Support Staff" dept="School Administration" init="AD" idx={0} />
+          )}
         </div>
 
-        {/* TIMETABLE */}
-        <h3 className="text-gray-900 font-bold text-[18px] mb-4">Today's Timetable</h3>
-        <div className="space-y-3 mb-8">
-          <TimetableCard color="bg-indigo-100" title="Mathematics" topic="Calculus & Algebra" time="08:30 AM" room="Lab 204" />
-          <TimetableCard color="bg-teal-100" title="Physics" topic="Quantum Mechanics" time="10:15 AM" room="Hall A" />
+        {/* HOMEWORK SUMMARY */}
+        <div className="flex justify-between items-end mb-8">
+           <h3 className="text-black font-black text-2xl tracking-tight uppercase leading-none">Homework Summary</h3>
+           <div className="bg-orange-50 px-4 py-2 rounded-2xl border border-orange-100">
+             <span className="text-orange-700 text-[10px] font-black uppercase tracking-widest leading-none">
+                {homeworks.length} Pending
+             </span>
+           </div>
         </div>
 
-        {/* PENDING ASSIGNMENTS */}
-        <div className="flex justify-between items-end mb-4">
-          <h3 className="text-gray-900 font-bold text-[18px]">Pending Assignments</h3>
-          <span className="bg-red-500 text-white font-bold text-[10px] px-2.5 py-0.5 rounded-full">3 Active</span>
-        </div>
-
-        <div className="space-y-4 mb-4">
-          <AssignmentCard 
-            tag="MATH" tagColor="bg-blue-50 text-blue-600" 
-            due="Due: Tomorrow" 
-            title="Integrals Worksheet" 
-            desc="Complete all exercises from Chapter 5.2. Show all working steps clearly." 
-            files="2 PDF files" 
-          />
-          <AssignmentCard 
-            tag="PHYSICS" tagColor="bg-green-50 text-green-600" 
-            due="Due: Friday" 
-            title="Lab Report: Pendulums" 
-            desc="Submit the digital copy of your findings from Monday's lab session." 
-            files="1 DOCX" 
-          />
+        <div className="grid gap-6">
+          {homeworks.slice(0, 4).map((hw, idx) => (
+             <MandateCard 
+                key={hw._id || idx}
+                idx={idx}
+                subject={hw.subject?.toUpperCase() || "CORE"} 
+                title={hw.title} 
+                due={`Due: ${new Date(hw.dueDate).toLocaleDateString()}`} 
+             />
+          ))}
         </div>
 
       </div>
 
-      <div className="fixed bottom-6 w-full flex justify-end z-50 pointer-events-none">
-        <div className="max-w-4xl mx-auto w-full flex justify-end px-6 pointer-events-auto">
-          <button 
-            onClick={() => alert("Opening Chat with support...")}
-            className="bg-[#4f46e5] text-white px-5 py-3.5 rounded-2xl font-bold shadow-lg shadow-indigo-500/30 flex items-center gap-2 hover:bg-indigo-600 transition">
-            <Plus className="w-5 h-5" /> New Message
-          </button>
-        </div>
-      </div>
-
-    </div>
-  );
-}
-
-function InstructorCard({ init, name, sub, email }) {
-  return (
-    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-pointer">
-      <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-800 font-bold text-[15px] border border-gray-100">
-        {init}
-      </div>
-      <div className="flex-1">
-        <h4 className="font-bold text-gray-900 text-[15px]">{name}</h4>
-        <p className="text-[#4f46e5] font-bold text-[11px] mt-0.5">{sub}</p>
-        <p className="text-gray-400 text-[11px] mt-1 flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {email}</p>
-      </div>
-      <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-[#4f46e5]">
-        <MessageCircle className="w-5 h-5 fill-current" />
-      </div>
-    </div>
-  );
-}
-
-function TimetableCard({ color, title, topic, time, room }) {
-  return (
-    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl ${color}`}></div>
-      <div className="flex-1">
-        <h4 className="font-bold text-gray-900 text-[15px]">{title}</h4>
-        <p className="text-gray-500 text-[12px]">{topic}</p>
-      </div>
-      <div className="text-right">
-        <p className="font-bold text-gray-900 text-[12px]">{time}</p>
-        <p className="text-gray-400 text-[11px]">{room}</p>
-      </div>
-    </div>
-  );
-}
-
-function AssignmentCard({ tag, tagColor, due, title, desc, files }) {
-  return (
-    <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition">
-      <div className="flex justify-between items-center mb-3">
-        <span className={`font-bold text-[10px] px-2 py-0.5 rounded-lg tracking-wide ${tagColor}`}>{tag}</span>
-        <div className="flex items-center gap-1 text-red-500 font-bold text-[11px]">
-          <Clock className="w-3.5 h-3.5" /> {due}
-        </div>
-      </div>
-      
-      <h4 className="font-bold text-gray-900 text-[16px]">{title}</h4>
-      <p className="text-gray-500 text-[13px] mt-1.5 leading-relaxed">{desc}</p>
-      
-      <hr className="border-gray-100 my-4" />
-      
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-1.5 text-gray-500 font-bold text-[11px]">
-          <Paperclip className="w-3.5 h-3.5" /> {files}
-        </div>
+      <div className="fixed bottom-10 right-10 z-[100] animate-in slide-in-from-bottom">
         <button 
-           onClick={() => alert("Uploading assignment files...")}
-          className="bg-[#4f46e5] text-white px-4 py-2 rounded-full font-bold text-[12px] hover:bg-indigo-600 transition">
-          Submit Task
+          onClick={() => alert("Chat functionality coming soon...")}
+          className="bg-black text-white px-10 py-5 rounded-[30px] font-black shadow-3xl flex items-center gap-4 hover:scale-110 active:scale-95 transition-all text-[15px] uppercase tracking-widest">
+          <MessageCircle className="w-7 h-7 text-teal-400" /> Start Chat
         </button>
       </div>
+
+    </div>
+  );
+}
+
+function HubStat({ label, val }) {
+  return (
+    <div className="text-center group">
+       <p className="text-white/40 text-[9px] font-black uppercase tracking-[2px] mb-1">{label}</p>
+       <h4 className="text-white text-2xl font-black tracking-tight leading-none">{val}</h4>
+    </div>
+  );
+}
+
+function NoticeItem({ idx, title, content, date }) {
+  return (
+    <div 
+      className="bg-white p-7 rounded-[45px] border border-gray-100 shadow-sm flex items-start gap-8 hover:shadow-2xl transition-all duration-300 group animate-in fade-in"
+      style={{ animationDelay: `${idx * 100}ms` }}
+    >
+      <div className="bg-indigo-50 p-6 rounded-[30px] shrink-0 group-hover:bg-indigo-600 transition-all border border-indigo-50">
+         <Megaphone className="text-[#4f46e5] group-hover:text-white w-7 h-7" />
+      </div>
+      <div>
+         <div className="flex justify-between items-center mb-2">
+            <span className="bg-indigo-100 text-[#4f46e5] font-black text-[10px] uppercase tracking-[2px] px-3 py-1 rounded-xl">Notice</span>
+            <span className="text-gray-300 font-bold text-[11px] uppercase italic">{date}</span>
+         </div>
+         <h4 className="text-black font-black text-2xl tracking-tight leading-tight uppercase group-hover:text-[#4f46e5] transition-colors">{title}</h4>
+         <p className="text-gray-400 font-bold text-[15px] mt-3 leading-relaxed italic">{content}</p>
+      </div>
+    </div>
+  );
+}
+
+function FacultyCard({ name, dept, init, idx }) {
+  return (
+    <div 
+      className="bg-white p-6 rounded-[40px] border border-gray-100 shadow-sm flex items-center hover:shadow-2xl transition-all duration-300 group animate-in fade-in"
+      style={{ animationDelay: `${idx * 80}ms` }}
+    >
+      <div className="w-16 h-16 rounded-[24px] bg-[#1e1b4b] text-white font-black text-[18px] flex items-center justify-center border-4 border-white shadow-xl">
+        {init}
+      </div>
+      <div className="ml-6 flex-1">
+         <h4 className="text-black font-black text-[17px] tracking-tight leading-tight uppercase group-hover:text-[#4f46e5] transition-colors">{name}</h4>
+         <p className="text-gray-400 font-bold text-[10px] uppercase mt-1 italic">{dept}</p>
+      </div>
+      <button className="bg-gray-50 p-3 rounded-full text-gray-300 hover:bg-black hover:text-white transition shadow-sm">
+         <MessageSquare className="w-5 h-5" />
+      </button>
+    </div>
+  );
+}
+
+function MandateCard({ subject, title, due, idx }) {
+  return (
+    <div 
+      className="bg-white p-6 rounded-[40px] border border-gray-100 shadow-sm flex items-center group hover:shadow-2xl transition-all duration-300 animate-in fade-in cursor-pointer"
+      style={{ animationDelay: `${idx * 80}ms` }}
+    >
+       <div className="bg-orange-50 p-4 rounded-2xl group-hover:bg-orange-500 transition-colors shadow-inner shrink-0 border border-orange-50">
+         <Activity className="text-orange-600 group-hover:text-white w-6 h-6" />
+       </div>
+       <div className="ml-6 flex-1">
+          <div className="flex items-center gap-3 mb-1">
+             <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">{subject}</span>
+             <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
+             <span className="text-[10px] font-black text-gray-400 uppercase italic">{due}</span>
+          </div>
+          <h4 className="text-black font-black text-[16px] tracking-tight uppercase group-hover:text-[#4f46e5] transition-colors">{title}</h4>
+       </div>
+       <ChevronRight className="w-8 h-8 text-gray-100 group-hover:text-black transition-colors" />
     </div>
   );
 }

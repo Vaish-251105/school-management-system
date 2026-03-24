@@ -6,13 +6,15 @@ import '../../services/theme_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/api_service.dart';
 import '../auth/login_screen.dart';
-import 'attendance_screen.dart';
-import 'homework_screen.dart';
-import 'exam_results_screen.dart';
+import '../modules/attendance_screen.dart';
+import '../modules/homework_screen.dart';
+import '../modules/exams_screen.dart';
 import '../communication/communication_screen.dart';
 import '../modules/notification_screen.dart';
 import '../modules/calendar_screen.dart';
 import '../profile/user_profile.dart';
+import 'exam_schedule.dart';
+import '../modules/fees_screen.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -23,26 +25,24 @@ class TeacherDashboard extends StatefulWidget {
 
 class _TeacherDashboardState extends State<TeacherDashboard> {
   bool _isLoading = true;
-  int _studentCount = 0;
-  int _classCount = 0;
-  int _noticesCount = 0;
+  String _selectedClass = "10";
+  List<dynamic> _timetable = [];
+
+  final List<String> _classes = ["8", "9", "10", "11", "12"];
 
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    _loadData();
   }
 
-  Future<void> _loadStats() async {
-    if (!mounted) return;
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final stats = await ApiService.getDashboardStats();
+      final tts = await ApiService.getTimetableByClass(_selectedClass);
       if (mounted) {
         setState(() {
-          _studentCount = stats['studentsCount'] ?? 0;
-          _classCount = stats['classesCount'] ?? 0;
-          _noticesCount = stats['noticesCount'] ?? 0;
+          _timetable = tts.isNotEmpty ? tts[0]['periods'] : [];
           _isLoading = false;
         });
       }
@@ -54,26 +54,25 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeProvider>().isDarkMode;
-    final teacherName = context.watch<AuthService>().name;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-    
+    final user = context.watch<AuthService>();
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
-        onRefresh: _loadStats,
+        onRefresh: _loadData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
               // HEADER
               Container(
-                padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 60, isMobile ? 16 : 24, 40),
+                padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                    colors: [Color(0xFF4F46E5), Color(0xFF312E81)],
                   ),
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(50),
@@ -85,17 +84,15 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("Faculty Portal",
-                                  style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                              const SizedBox(height: 4),
-                              Text("Hello, ${teacherName.split(' ')[0]}",
-                                  style: TextStyle(fontSize: isMobile ? 22 : 28, color: Colors.white, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Faculty Portal",
+                                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                            const SizedBox(height: 4),
+                            Text("Hi, ${user.name.split(' ')[0]}",
+                                style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+                          ],
                         ),
                         Row(
                           children: [
@@ -105,29 +102,33 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
-                              child: const CircleAvatar(
+                               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
+                              child: CircleAvatar(
                                 radius: 26,
                                 backgroundColor: Colors.white24,
-                                child: Icon(LucideIcons.user, color: Colors.white, size: 22),
+                                child: Text("${user.name[0]}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                               ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () {
+                                context.read<AuthService>().logout();
+                                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                              },
+                              icon: const Icon(LucideIcons.logOut, color: Colors.white, size: 20),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
-                    _isLoading 
-                      ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                      : _buildStatsRow(isMobile),
                   ],
                 ),
               ),
-  
+    
               const SizedBox(height: 32),
               
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -142,21 +143,47 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       crossAxisSpacing: 16,
                       childAspectRatio: 1.4,
                       children: [
-                        _buildTeacherCard(context, "Mark Attendance", "Daily Presence", LucideIcons.checkSquare, Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
-                        _buildTeacherCard(context, "Upload Homework", "Class Assignments", LucideIcons.bookOpen, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeworkScreen()))),
-                        _buildTeacherCard(context, "Grade Exams", "Results Entry", LucideIcons.fileSpreadsheet, Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExamResultsScreen()))),
-                        _buildTeacherCard(context, "Staff Chat", "Internal Inbox", LucideIcons.messageCircle, Colors.purple, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunicationScreen()))),
-                        _buildTeacherCard(context, "Notices", "Broadcasting", LucideIcons.megaphone, Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()))),
-                        _buildTeacherCard(context, "Academic Hub", "Institutional Calendar", LucideIcons.calendar, Colors.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AcademicCalendarScreen()))),
+                        _buildTeacherCard(context, "Attendance", "Daily Logs", LucideIcons.checkSquare, Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
+                        _buildTeacherCard(context, "Assignments", "Upload Work", LucideIcons.bookOpen, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeworkScreen()))),
+                        _buildTeacherCard(context, "Exam Results", "Entry", LucideIcons.fileSpreadsheet, Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExamsScreen()))),
+                        _buildTeacherCard(context, "Exam Schedule", "Plan Tests", LucideIcons.calendarClock, Colors.indigo, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExamScheduleScreen()))),
+                        _buildTeacherCard(context, "Messaging", "Inbox", LucideIcons.messageCircle, Colors.purple, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunicationScreen()))),
+                        _buildTeacherCard(context, "Notices", "Broadcast", LucideIcons.megaphone, Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()))),
+                        _buildTeacherCard(context, "Student Fees", "Status", LucideIcons.wallet, Colors.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen()))),
+                         _buildTeacherCard(context, "Calendar", "Events", LucideIcons.calendar, Colors.amber, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AcademicCalendarScreen()))),
                       ],
                     ),
                     
                     const SizedBox(height: 32),
-                    Text("Teacher's Ledger",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Class Schedule",
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                        DropdownButton<String>(
+                          value: _selectedClass,
+                          items: _classes.map((c) => DropdownMenuItem(value: c, child: Text("Grade $c"))).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _selectedClass = val);
+                              _loadData();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 16),
-                    _buildSessionTile("09:00 AM", "Subject: Advanced Maths", "Section: Grade 10-A", "Location: Room 302"),
-                    _buildSessionTile("11:30 AM", "Subject: Physics Lab", "Section: Grade 12-B", "Location: Lab 04"),
+                    _isLoading 
+                      ? const Center(child: CircularProgressIndicator())
+                      : _timetable.isEmpty 
+                        ? const Center(child: Padding(padding: EdgeInsets.all(40), child: Text("No schedule for this class today", style: TextStyle(color: Colors.grey))))
+                        : Column(
+                            children: _timetable.map<Widget>((p) => _buildSessionTile(
+                              p['startTime'] ?? "--", 
+                              "Subject: ${p['subject'] ?? 'Unassigned'}", 
+                              "Location: ${p['room'] ?? 'General Hall'}"
+                            )).toList(),
+                          ),
                   ],
                 ),
               ),
@@ -165,36 +192,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatsRow(bool isMobile) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 20, horizontal: isMobile ? 16 : 24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Exporting full schedule to PDF..."))),
+        backgroundColor: const Color(0xFF312E81),
+        label: const Text("Download PDF", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: const Icon(LucideIcons.download, color: Colors.white),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _statItem("Students", _studentCount.toString()),
-          Container(height: 30, width: 1, color: Colors.white10),
-          _statItem("Classes", _classCount.toString().padLeft(2, '0')),
-          Container(height: 30, width: 1, color: Colors.white10),
-          _statItem("Alerts", _noticesCount.toString().padLeft(2, '0')),
-        ],
-      ),
-    );
-  }
-
-  Widget _statItem(String label, String value) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
-      ],
     );
   }
 
@@ -213,7 +216,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           children: [
             Icon(icon, color: color, size: 28),
             const Spacer(),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             Text(sub, style: TextStyle(color: Colors.grey.shade500, fontSize: 10)),
           ],
         ),
@@ -221,29 +224,33 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  Widget _buildSessionTile(String time, String subject, String grade, String room) {
+  Widget _buildSessionTile(String time, String subject, String location) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Row(
         children: [
-          Text(time, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
+            child: Text(time, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF475569), fontSize: 12)),
+          ),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(subject, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                Text("$grade • $room", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(subject, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text(location, style: const TextStyle(fontSize: 12, color: Colors.indigo, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
-          const Icon(LucideIcons.chevronRight, size: 18, color: Colors.grey),
         ],
       ),
     );

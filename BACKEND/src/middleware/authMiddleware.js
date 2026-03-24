@@ -7,20 +7,42 @@ export const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
       token = req.headers.authorization.split(" ")[1];
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
       req.user = await User.findById(decoded.id).select("-password");
-
-      next();
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      return next();
     } catch (error) {
-      res.status(401);
-      throw new Error("Not authorized, token failed");
+       return res.status(401).json({ message: "Not authorized, token failed" });
     }
   }
 
   if (!token) {
-    res.status(401);
-    throw new Error("Not authorized, no token");
+     return res.status(401).json({ message: "Not authorized, no token" });
+  }
+};
+
+export const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ message: "Not authorized as an admin" });
+  }
+};
+
+export const teacherOnly = (req, res, next) => {
+  if (req.user && (req.user.role === 'teacher' || req.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(403).json({ message: "Not authorized as a teacher" });
+  }
+};
+
+export const accountantOnly = (req, res, next) => {
+  if (req.user && (req.user.role === 'accountant' || req.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(403).json({ message: "Not authorized as an accountant" });
   }
 };

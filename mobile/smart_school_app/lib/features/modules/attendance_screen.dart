@@ -209,7 +209,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       if (_logs.isEmpty)
                          const Center(child: Text("No attendance records found."))
                       else
-                        ..._logs.map((log) => _attendanceTile(
+                        ..._logs.map<Widget>((log) => _attendanceTile(
                             context, 
                             log['date']?.toString().split('T')[0] ?? "--", 
                             log['status'] == 'present' ? "Present" : "Absent", 
@@ -354,7 +354,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       children: [
         Text("Mark Attendance for ${_selectedClass}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-        ..._students.map((student) => Container(
+        ..._students.map<Widget>((student) => Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(

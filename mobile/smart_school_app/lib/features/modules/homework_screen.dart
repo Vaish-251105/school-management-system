@@ -3,7 +3,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../services/auth_service.dart';
-
 import '../../services/api_service.dart';
 
 class HomeworkScreen extends StatefulWidget {
@@ -33,8 +32,10 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
   }
 
   Future<void> _fetchData() async {
-    _fetchHomework();
-    _fetchNotices();
+    await Future.wait([
+      _fetchHomework(),
+      _fetchNotices(),
+    ]);
   }
 
   Future<void> _deleteHomework(String id) async {
@@ -114,6 +115,8 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
         ],
       ),
     );
+  }
+
   void _showAddNoticeDialog() {
     final titleController = TextEditingController();
     final contentController = TextEditingController();
@@ -150,6 +153,8 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
       ),
     );
   }
+
+  void _showSubmitHomeworkDialog() {
     final titleController = TextEditingController();
     final descController = TextEditingController();
 
@@ -211,14 +216,15 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final userRole = context.watch<AuthService>().role;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(onPressed: () => Navigator.pop(context), icon: Icon(LucideIcons.chevronLeft, color: isDark ? Colors.white : AppColors.textDark)),
-        title: const Text("Assignments & Notices", style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text("Assignments & Notices", style: TextStyle(color: isDark ? Colors.white : AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -281,7 +287,7 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
       child: ListView(
         padding: const EdgeInsets.all(24),
         children: _homeworks.isNotEmpty 
-          ? _homeworks.map((hw) => _homeworkCard(
+          ? _homeworks.map<Widget>((hw) => _homeworkCard(
               context, 
               hw['_id'],
               hw['subject'] ?? "General", 
@@ -303,7 +309,7 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
       child: ListView(
         padding: const EdgeInsets.all(24),
         children: _notices.isNotEmpty 
-          ? _notices.map((n) => _noticeCard(
+          ? _notices.map<Widget>((n) => _noticeCard(
               context, 
               n['_id'],
               n['title'] ?? "General Notice", 
@@ -316,7 +322,6 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
       ),
     );
   }
-
 
   Widget _homeworkCard(BuildContext context, String id, String sub, String date, String title, String desc, String status, Color color, bool isTeacher) {
     final theme = Theme.of(context);
@@ -356,6 +361,43 @@ class _HomeworkScreenState extends State<HomeworkScreen> with SingleTickerProvid
               Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Text(status, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold))),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _noticeCard(BuildContext context, String id, String title, String content, String date, String priority, bool isTeacher) {
+    final theme = Theme.of(context);
+    Color color = priority == 'urgent' ? Colors.red : (priority == 'important' ? Colors.orange : AppColors.primary);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Text(priority.toUpperCase(), style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold))),
+              if (isTeacher)
+                IconButton(
+                  onPressed: () => _deleteNotice(id), 
+                  icon: const Icon(LucideIcons.trash2, color: Colors.red, size: 18)
+                )
+              else
+                Text(date, style: const TextStyle(color: AppColors.textLight, fontSize: 11)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Text(content, style: const TextStyle(color: AppColors.textLight, fontSize: 13, height: 1.5)),
         ],
       ),
     );

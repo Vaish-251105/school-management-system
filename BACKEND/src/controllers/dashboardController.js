@@ -4,6 +4,8 @@ import Teacher from '../models/Teacher.js';
 import Fee from '../models/Fee.js';
 import Notice from '../models/Notice.js';
 import Attendance from '../models/Attendance.js';
+import Homework from '../models/Homework.js';
+import Class from '../models/Class.js';
 
 export const getDashboardStats = asyncHandler(async (req, res) => {
   const startOfToday = new Date();
@@ -15,19 +17,23 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
   const [
     totalStudents,
     totalTeachers,
+    totalClasses,
     allFees,
     totalNotices,
     recentNotices,
-    todayAttendance
+    todayAttendance,
+    homeworkCount
   ] = await Promise.all([
     Student.countDocuments(),
     Teacher.countDocuments(),
+    Class.countDocuments(),
     Fee.find({}),
     Notice.countDocuments(),
     Notice.find().sort({ createdAt: -1 }).limit(5),
     Attendance.find({
       date: { $gte: startOfToday, $lte: endOfToday }
-    })
+    }),
+    Homework.countDocuments()
   ]);
 
   const totalFees = allFees.reduce((acc, fee) => acc + (fee.amount || 0), 0);
@@ -44,8 +50,10 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     studentsCount: totalStudents,
     teachersCount: totalTeachers,
     totalFees,
+    classesCount: totalClasses,
     noticesCount: totalNotices,
     attendancePercentage,
+    homeworkCount,
     recentNotices,
     present: presentCount,
     absent: absentCount

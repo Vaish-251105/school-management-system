@@ -4,19 +4,34 @@ import ExpenseForm from "../components/ExpenseForm"
 import ExpenseList from "../components/ExpenseList"
 import TransactionTable from "../components/TransactionTable"
 import FinanceCharts from "../components/FinanceCharts"
-import { Wallet, TrendingUp, TrendingDown, Landmark, FileText, Plus, RefreshCw, ChevronLeft, MoreVertical } from "lucide-react"
+import { 
+  Wallet, 
+  TrendingUp, 
+  TrendingDown, 
+  Landmark, 
+  FileText, 
+  Plus, 
+  RefreshCw, 
+  ChevronLeft, 
+  MoreVertical,
+  Activity,
+  ArrowUpRight,
+  ShieldCheck,
+  Search,
+  ChevronRight,
+  Loader2
+} from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 export default function Accountant() {
+  const navigate = useNavigate();
   const [expenses, setExpenses] = useState([])
   const [fees, setFees] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
-  const [userName, setUserName] = useState("Accountant")
+  const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    if (user.name) setUserName(user.name);
     fetchData();
   }, [])
 
@@ -29,10 +44,8 @@ export default function Accountant() {
       ]);
       setExpenses(Array.isArray(expRes.data) ? expRes.data : []);
       setFees(Array.isArray(feeRes.data) ? feeRes.data : []);
-      setError(null);
     } catch (err) {
-      console.error("Data fetch error:", err);
-      setError("Failed to sync financial records. Reconnecting...");
+      console.error("Finance fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -41,13 +54,9 @@ export default function Accountant() {
   const addExpense = async (data) => {
     try {
       await api.post("/expenses", data);
-      alert("Expense recorded successfully!");
       setShowExpenseForm(false);
       fetchData();
-    } catch (err) {
-      console.error("Expense post error:", err);
-      alert("Failed to record expense. Please try again.");
-    }
+    } catch (err) { alert("Failed to add expense. Try again."); }
   }
 
   const deleteExpense = async (id) => {
@@ -55,10 +64,7 @@ export default function Accountant() {
     try {
       await api.delete(`/expenses/${id}`);
       fetchData();
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete record.");
-    }
+    } catch (err) { alert("Delete failed"); }
   }
 
   const totalExpenses = expenses.reduce((a, b) => a + (Number(b.amount) || 0), 0)
@@ -70,142 +76,159 @@ export default function Accountant() {
     const reportData = [
       ["Type", "Title", "Amount", "Date"],
       ...fees.map(f => ["Fee Receipt", f.type || "School Fee", f.amount, new Date(f.createdAt).toLocaleDateString()]),
-      ...expenses.map(e => ["Operational Expense", e.title, e.amount, new Date(e.date || e.createdAt).toLocaleDateString()])
+      ...expenses.map(e => ["Expense", e.title, e.amount, new Date(e.date || e.createdAt).toLocaleDateString()])
     ];
     const csvContent = "data:text/csv;charset=utf-8," + reportData.map(e => e.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `School_Finance_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Finance_Report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#f8fafc]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-teal-600 mb-4"></div>
-      <p className="text-gray-500 font-medium">Syncing Ledger...</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#fafafa]">
+      <Loader2 className="w-12 h-12 animate-spin text-teal-600 mb-6" />
+      <p className="text-gray-400 font-black italic tracking-widest uppercase text-black">Syncing Ledger...</p>
     </div>
   )
 
   return (
-    <div className="bg-[#f0f2f5] min-h-screen font-sans pb-20">
-      {/* PROFESSIONAL HEADER AREA */}
-      <div className="bg-gradient-to-r from-[#0d9488] to-[#0f766e] px-8 pt-12 pb-16 rounded-b-[50px] shadow-2xl relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-10">
+    <div className="bg-[#fafafa] min-h-screen pb-40 font-sans animate-in fade-in transition-all text-black">
+      
+      {/* HEADER AREA */}
+      <div className="bg-[#0d9488] px-8 pt-12 pb-14 rounded-b-[60px] shadow-2xl relative overflow-hidden shrink-0">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center text-white text-center md:text-left text-black">
+          <div className="flex gap-6 items-center animate-in slide-in-from-bottom duration-700">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl backdrop-blur-md active:scale-95 group">
+              <ChevronLeft className="w-7 h-7 text-white" />
+            </button>
             <div>
-              <p className="text-teal-100 text-[13px] font-bold tracking-[2px] uppercase mb-1">Accounts & Finance Hub</p>
-              <h1 className="text-white text-3xl font-extrabold tracking-tight">Hello, {userName}</h1>
-            </div>
-            <div className="flex items-center gap-4">
-               <button onClick={fetchData} className="bg-white/10 hover:bg-white/20 p-3 rounded-full text-white transition-all transform hover:rotate-180 duration-500 shadow-lg border border-white/10">
-                 <RefreshCw className="w-5 h-5" />
-               </button>
-               <button onClick={() => window.location.reload()} className="bg-white/10 hover:bg-white/20 p-3 rounded-full text-white transition-all shadow-lg border border-white/10">
-                 <MoreVertical className="w-5 h-5" />
-               </button>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-[3px] mb-1">Financial Portal</p>
+              <h1 className="text-white text-[32px] font-black leading-tight uppercase tracking-tight">Accountant Dashboard</h1>
             </div>
           </div>
+          <div className="flex gap-4 mt-6 md:mt-0">
+             <button onClick={fetchData} className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition group shadow-2xl backdrop-blur-md text-white">
+               <RefreshCw className="w-7 h-7" />
+             </button>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <SummaryCard title="Total Collected" value={totalCollectedFees} color="blue" icon={<TrendingUp />} />
-            <SummaryCard title="Pending Dues" value={totalPendingFees} color="amber" icon={<Landmark />} />
-            <SummaryCard title="Operational Spend" value={totalExpenses} color="rose" icon={<TrendingDown />} />
-            <SummaryCard title="Vault Balance" value={netBalance} color="emerald" icon={<Wallet />} />
-          </div>
+        <div className="max-w-7xl mx-auto mt-10 relative z-10 animate-in slide-in-from-bottom duration-1000">
+           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+             <FinanceStat title="FEES COLLECTED" val={totalCollectedFees} color="teal" icon={<TrendingUp />} />
+             <FinanceStat title="PENDING FEES" val={totalPendingFees} color="amber" icon={<Landmark />} />
+             <FinanceStat title="TOTAL EXPENSES" val={totalExpenses} color="rose" icon={<TrendingDown />} />
+             <FinanceStat title="NET BALANCE" val={netBalance} color="emerald" icon={<Wallet />} />
+           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 -mt-10 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            {/* QUICK ACTIONS */}
-            <div className="bg-white p-6 rounded-[30px] border border-gray-100 shadow-xl flex items-center justify-between">
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setShowExpenseForm(!showExpenseForm)}
-                  className="flex items-center gap-2.5 bg-[#0d9488] text-white px-6 py-3.5 rounded-2xl font-bold text-[14px] hover:bg-[#0f766e] transition-all transform hover:-translate-y-1 shadow-lg active:scale-95"
-                >
-                  <Plus className="w-5 h-5" /> {showExpenseForm ? "Cancel Entry" : "Record Expense"}
-                </button>
-                <button 
-                  onClick={generateReport}
-                  className="flex items-center gap-2.5 bg-white border-2 border-slate-200 text-slate-700 px-6 py-3.5 rounded-2xl font-bold text-[14px] hover:bg-slate-50 transition-all shadow-md active:scale-95"
-                >
-                  <FileText className="w-5 h-5" /> Audit Report
-                </button>
-              </div>
-              <div className="hidden sm:flex items-center gap-2 text-slate-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[12px] font-bold uppercase tracking-wider">Live System Connected</span>
-              </div>
+      <div className="max-w-7xl mx-auto px-8 mt-12 w-full flex-1">
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 space-y-10">
+            
+            {/* ACTIONS */}
+            <div className="bg-white p-6 rounded-[40px] border border-gray-100 shadow-xl flex items-center justify-between text-black">
+               <div className="flex gap-4">
+                  <button
+                    onClick={() => setShowExpenseForm(!showExpenseForm)}
+                    className="flex items-center gap-3 bg-black text-white px-8 py-5 rounded-[28px] font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-2xl active:scale-95">
+                    <Plus className="w-5 h-5 text-teal-400" /> 
+                    {showExpenseForm ? "Close Form" : "Add Expense"}
+                  </button>
+                  <button 
+                    onClick={generateReport}
+                    className="flex items-center gap-3 bg-white border border-gray-100 text-black px-8 py-5 rounded-[28px] font-black text-sm uppercase tracking-widest hover:bg-gray-50 transition shadow-sm active:scale-95">
+                    <FileText className="w-5 h-5 text-teal-500" /> Export CSV
+                  </button>
+               </div>
+               <div className="hidden lg:flex items-center gap-3 bg-teal-50 px-6 py-3 rounded-2xl border border-teal-100">
+                  <Activity className="text-teal-500 w-5 h-5 animate-pulse" />
+                  <span className="text-teal-700 text-[10px] font-black uppercase tracking-widest leading-none">Live Sync</span>
+               </div>
             </div>
 
             {showExpenseForm && (
-              <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="animate-in slide-in-from-top duration-500">
                 <ExpenseForm addExpense={addExpense} />
               </div>
             )}
 
-            <div className="bg-white rounded-[35px] border border-gray-100 shadow-xl overflow-hidden">
-               <div className="p-8 border-b border-gray-50 flex justify-between items-center">
-                  <h3 className="text-xl font-extrabold text-[#1e293b]">Expense Ledger</h3>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{expenses.length} Records found</span>
+            <div className="bg-white rounded-[50px] border border-gray-100 shadow-2xl overflow-hidden p-3 text-black">
+               <div className="p-8 pb-4 flex justify-between items-center bg-gray-50 rounded-t-[45px]">
+                  <h3 className="text-2xl font-black text-black tracking-tight uppercase">Recent Expenses</h3>
+                  <div className="bg-rose-50 px-4 py-2 rounded-xl text-rose-500 text-[10px] font-black uppercase border border-rose-100">Outflow</div>
                </div>
-               <ExpenseList expenses={expenses} deleteExpense={deleteExpense} />
+               <div className="p-3">
+                 <ExpenseList expenses={expenses} deleteExpense={deleteExpense} />
+               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-[35px] border border-gray-100 shadow-xl overflow-hidden">
-               <h3 className="text-xl font-extrabold text-[#1e293b] mb-8">Transaction Analytics</h3>
+            <div className="bg-white p-10 rounded-[50px] border border-gray-100 shadow-2xl overflow-hidden text-black">
+               <div className="flex justify-between items-end mb-10">
+                  <div>
+                    <h3 className="text-2xl font-black text-black tracking-tight uppercase">Finance Analytics</h3>
+                    <p className="text-gray-400 font-bold text-xs uppercase mt-1">Cashflow visualization</p>
+                  </div>
+                  <div className="bg-indigo-50 p-2 rounded-xl text-[#4f46e5] border border-indigo-100 shadow-sm"><Activity className="w-6 h-6" /></div>
+               </div>
                <FinanceCharts expenses={expenses} fees={fees} />
             </div>
           </div>
 
-          <div className="lg:col-span-1">
-             <div className="bg-white rounded-[40px] border border-gray-100 shadow-2xl p-8 sticky top-8">
-                <div className="flex items-center gap-4 mb-8">
-                   <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center">
-                      <Landmark className="text-teal-600 w-7 h-7" />
+          <div className="lg:col-span-1 space-y-10">
+             <div className="bg-white rounded-[50px] border border-gray-100 shadow-3xl p-4 sticky top-10 flex flex-col text-black">
+                <div className="p-8 flex items-center gap-6 mb-4 bg-gray-50 rounded-[40px] border border-white">
+                   <div className="w-16 h-16 bg-teal-50 rounded-[28px] flex items-center justify-center border border-teal-100 shadow-inner">
+                      <Landmark className="text-teal-600 w-8 h-8" />
                    </div>
                    <div>
-                      <h4 className="font-extrabold text-lg text-slate-800 leading-tight">Recent Fee Activity</h4>
-                      <p className="text-slate-400 text-sm">Last 24 hours logs</p>
+                      <h4 className="font-black text-xl text-black uppercase tracking-tight leading-none">Latest Fees</h4>
+                      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-2">Verified Receipts</p>
                    </div>
                 </div>
-                <TransactionTable data={fees.slice(0, 10)} />
+                <div className="p-4 flex-1">
+                   <TransactionTable data={fees.slice(0, 8)} />
+                </div>
+                <button 
+                  onClick={() => navigate('/fees')}
+                  className="m-6 bg-black text-white py-5 rounded-[28px] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-gray-800 transition active:scale-95 shadow-xl">
+                  See All Fees <ArrowUpRight className="w-5 h-5 text-teal-400" />
+                </button>
              </div>
           </div>
         </div>
       </div>
+
     </div>
   )
 }
 
-function SummaryCard({ title, value, color, icon }) {
+function FinanceStat({ title, val, color, icon }) {
   const configs = {
-    blue: { bg: "bg-blue-600", light: "bg-blue-50", text: "text-blue-600", label: "text-blue-100" },
-    amber: { bg: "bg-amber-500", light: "bg-amber-50", text: "text-amber-600", label: "text-amber-100" },
-    rose: { bg: "bg-rose-500", light: "bg-rose-50", text: "text-rose-600", label: "text-rose-100" },
-    emerald: { bg: "bg-emerald-500", light: "bg-emerald-50", text: "text-emerald-700", label: "text-emerald-100" }
+    teal: "bg-[#0d9488]",
+    amber: "bg-amber-600",
+    rose: "bg-rose-600",
+    emerald: "bg-emerald-700"
   };
-  const config = configs[color];
 
   return (
-    <div className={`${config.bg} p-7 rounded-[35px] shadow-xl hover:scale-105 transition-all duration-300 border border-white/20 group relative overflow-hidden`}>
-      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-700">
-         {icon}
+    <div className={`${configs[color]} p-8 rounded-[40px] shadow-2xl flex flex-col items-center justify-center text-center transition-all duration-300 hover:scale-105 border border-white/10 text-white`}>
+      <div className="bg-white/10 p-4 rounded-3xl text-white mb-4">
+        {React.cloneElement(icon, { className: "w-7 h-7" })}
       </div>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="bg-white/20 p-2 rounded-xl text-white">
-          {icon}
-        </div>
-        <h3 className={`${config.label} text-[13px] font-bold uppercase tracking-widest`}>{title}</h3>
-      </div>
-      <p className="text-white text-[28px] font-black tracking-tight leading-none group-hover:translate-x-1 transition-transform">
-        ₹{Math.abs(value).toLocaleString()}
-      </p>
+      <p className="text-white/60 font-black text-[9px] uppercase tracking-[2px] mb-2">{title}</p>
+      <h3 className="text-white text-3xl font-black tracking-tight leading-none tabular-nums">
+        ₹{Math.abs(val).toLocaleString()}
+      </h3>
     </div>
   );
-}
+}

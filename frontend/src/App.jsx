@@ -20,6 +20,10 @@ import Profile from "./pages/Profile";
 import Signup from "./pages/Signup";
 import Notifications from "./pages/Notifications";
 import CalendarPage from "./pages/CalendarPage";
+import StaffAttendance from "./pages/StaffAttendance";
+import ExamSchedule from "./pages/ExamSchedule";
+import Transport from "./pages/Transport";
+import Salaries from "./pages/Salaries";
 
 
 function App() {
@@ -52,12 +56,17 @@ function App() {
               <Route path="accountant" element={<Accountant />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="exams" element={<ExamResults />} />
+              <Route path="homework" element={<Homework />} />
               <Route path="homework-notices" element={<Homework />} />
               <Route path="communication" element={<Communication />} />
               <Route path="reports" element={<Reports />} />
               <Route path="profile" element={<Profile />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="calendar" element={<CalendarPage />} />
+              <Route path="staff-attendance" element={<StaffAttendance />} />
+              <Route path="exams-schedule" element={<ExamSchedule />} />
+              <Route path="transport" element={<Transport />} />
+              <Route path="salaries" element={<Salaries />} />
             </Route>
 
           </Routes>

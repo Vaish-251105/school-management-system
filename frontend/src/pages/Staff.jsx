@@ -8,7 +8,13 @@ import {
   Calculator,
   Landmark,
   Loader2,
-  Bell
+  Bell,
+  MoreVertical,
+  Activity,
+  Award,
+  Globe,
+  Mail,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
@@ -17,10 +23,12 @@ export default function Staff() {
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
+        setLoading(true);
         const response = await api.get("/teachers");
         setTeachers(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
@@ -32,107 +40,90 @@ export default function Staff() {
     fetchTeachers();
   }, []);
 
+  const filtered = teachers.filter(t => 
+    t.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.department?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="bg-[#fafafa] min-h-screen font-sans flex flex-col relative pb-28 text-gray-900">
+    <div className="bg-[#fafafa] min-h-screen pb-32 font-sans animate-in fade-in transition-all">
       
       {/* HEADER AREA */}
-      <div className="bg-gradient-to-br from-[#4338ca] to-[#4f46e5] px-6 pt-12 pb-8 rounded-b-[40px] shadow-lg shrink-0">
-        <div className="max-w-4xl mx-auto">
-          
-          <div className="flex justify-between items-center mb-8">
-            <button onClick={() => navigate(-1)} className="text-white hover:bg-white/10 p-2 rounded-full transition">
-              <ChevronLeft className="w-6 h-6" />
+      <div className="bg-[#1e1b4b] px-8 pt-12 pb-14 rounded-b-[60px] shadow-2xl relative overflow-hidden text-black">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center text-white text-center md:text-left">
+          <div className="flex gap-6 items-center animate-in slide-in-from-bottom duration-700">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl backdrop-blur-md active:scale-95 group">
+              <ChevronLeft className="w-7 h-7 text-white" />
             </button>
-            <h1 className="text-white text-xl font-bold">Staff Directory</h1>
-            <div className="flex gap-2">
-               <button 
-                onClick={() => alert("No new staff notifications")}
-                className="text-white p-2 hover:bg-white/10 rounded-full transition">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={() => alert("Filter Options: \n• By Department\n• By Role\n• By Experience")}
-                className="text-white p-2 hover:bg-white/10 rounded-full transition">
-                <SlidersHorizontal className="w-5 h-5" />
-              </button>
+            <div>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-[3px] mb-1 px-1">Institutional Portal</p>
+              <h1 className="text-white text-[32px] font-black leading-tight uppercase tracking-tight">Teachers List</h1>
             </div>
           </div>
-
-          <div className="flex items-center bg-white/15 border border-white/20 rounded-2xl px-4 py-3 shadow-inner">
-            <Search className="text-white/70 w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder="Search staff, departments..." 
-              className="bg-transparent border-none text-white placeholder-white/70 outline-none w-full ml-3 text-sm"
-            />
+          <div className="flex items-center gap-4 mt-6 md:mt-0">
+             <button className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition group shadow-2xl backdrop-blur-md text-white">
+               <SlidersHorizontal className="w-7 h-7" />
+             </button>
           </div>
-
-        </div>
-      </div>
-
-      {/* BODY CONTENT */}
-      <div className="max-w-4xl mx-auto px-6 mt-6 w-full flex-1">
-        
-        {/* CHIPS */}
-        <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          <button className="bg-[#4f46e5] border border-[#4f46e5] text-white font-bold px-5 py-2.5 rounded-full text-[13px] shrink-0 shadow-sm">
-            All Staff
-          </button>
-          <button className="bg-transparent text-gray-500 font-medium px-5 py-2.5 rounded-full text-[13px] shrink-0 border border-gray-200 hover:bg-gray-50 transition">
-            Teachers
-          </button>
-          <button className="bg-transparent text-gray-500 font-medium px-5 py-2.5 rounded-full text-[13px] shrink-0 border border-gray-200 hover:bg-gray-50 transition">
-            Admin
-          </button>
         </div>
 
-        {/* LIST */}
-        <div className="space-y-4">
-          
-          <SectionHeader title="Academic Department" subtitle={`${teachers.length} Members`} />
-          
-          {loading ? (
-             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#4f46e5]" /></div>
-          ) : teachers.length === 0 ? (
-            <div className="text-center py-10 text-gray-500">No staff members found.</div>
-          ) : (
-            teachers.map((t) => (
-              <StaffCard 
-                key={t._id}
-                img={`https://ui-avatars.com/api/?name=${t.userId?.name || "TS"}&background=f3f4f6&color=4f46e5`}
-                name={t.userId?.name || "Staff Member"}
-                role={t.designation || t.userId?.role || "Educationist"}
-                dept={t.department || "Academic"}
-                icon={<Calculator className="w-3.5 h-3.5" />}
-                isOnline={true}
+        <div className="max-w-5xl mx-auto mt-10 relative z-10 animate-in slide-in-from-bottom duration-1000">
+           <div className="flex items-center bg-white/10 backdrop-blur-md border border-white/10 rounded-[28px] px-6 py-5 shadow-inner group focus-within:bg-white focus-within:border-white transition-all text-black">
+              <Search className="text-white/50 group-focus-within:text-[#4f46e5] w-6 h-6 transition" />
+              <input 
+                type="text" 
+                placeholder="Search by name or department..." 
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="bg-transparent border-none text-white placeholder-white/30 group-focus-within:text-black group-focus-within:placeholder-gray-400 outline-none w-full ml-4 text-[16px] font-bold"
               />
-            ))
-          )}
-
-          <div className="pt-2"></div>
-          <SectionHeader title="Administration" subtitle="Mock Data" />
-          
-          <StaffCard 
-            img="https://randomuser.me/api/portraits/men/90.jpg"
-            name="James Wilson"
-            role="Principal"
-            dept="Management"
-            icon={<Landmark className="w-3.5 h-3.5" />}
-            isOnline={true}
-          />
-
+           </div>
         </div>
-
       </div>
 
-      <div className="fixed bottom-6 right-6">
+      <div className="max-w-5xl mx-auto px-8 mt-12 w-full flex-1 text-black font-sans">
+        
+        {/* LIST COMPONENT */}
+        <div className="flex justify-between items-end mb-8 px-2">
+           <h3 className="text-black font-black text-2xl tracking-tight uppercase leading-none">Registered Faculty</h3>
+           <div className="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-2">
+             <div className="w-2.5 h-2.5 bg-[#4f46e5] rounded-full animate-pulse"></div>
+             <span className="text-[#4f46e5] text-[10px] font-black uppercase tracking-widest leading-none">Online</span>
+           </div>
+        </div>
+
+        <div className="grid gap-6">
+          {loading ? (
+             <div className="flex justify-center py-24"><Loader2 className="animate-spin text-[#4f46e5] w-12 h-12" /></div>
+          ) : filtered.length === 0 ? (
+             <div className="p-32 text-center bg-gray-50 border-4 border-dashed border-gray-100 rounded-[50px] flex flex-col items-center">
+                <Globe className="w-16 h-16 text-gray-200 mb-6" />
+                <p className="text-gray-400 font-black italic uppercase text-lg">No staff found</p>
+             </div>
+          ) : (
+             filtered.map((t, idx) => (
+               <StaffCard 
+                 key={t._id || idx}
+                 idx={idx}
+                 img={`https://ui-avatars.com/api/?name=${t.userId?.name || "TS"}&background=ffffff&color=4f46e5`}
+                 name={t.userId?.name || "Teacher"}
+                 role={t.designation || "Faculty"}
+                 dept={t.department || "Academic"}
+                 email={t.userId?.email || "faculty@school.edu"}
+               />
+             ))
+          )}
+        </div>
+      </div>
+
+      <div className="fixed bottom-10 right-10 z-[100]">
         <button 
-           onClick={() => {
-             alert("Redirecting to Staff Registration...");
-             navigate('/signup');
-           }}
-          className="bg-[#4f46e5] text-white px-6 py-3.5 rounded-full font-bold shadow-lg shadow-indigo-500/30 flex items-center gap-2 transition hover:scale-105 active:scale-95">
-          <Plus className="w-5 h-5" /> Add Staff
+           onClick={() => navigate('/signup')}
+           className="bg-black text-white px-8 py-5 rounded-[28px] font-black shadow-3xl shadow-indigo-500/10 flex items-center gap-4 hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest border border-white/10 group">
+          <Plus className="w-7 h-7 text-emerald-400" /> Register Teacher
         </button>
       </div>
 
@@ -140,47 +131,45 @@ export default function Staff() {
   );
 }
 
-function SectionHeader({ title, subtitle }) {
+function StaffCard({ idx, img, name, role, dept, email }) {
   return (
-    <div className="flex justify-between items-end pb-1">
-      <h3 className="text-[#4f46e5] font-bold text-[15px]">{title}</h3>
-      <p className="text-gray-500 text-[11px] font-bold">{subtitle}</p>
-    </div>
-  );
-}
-
-function StaffCard({ img, name, role, dept, icon, isOnline }) {
-  return (
-    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center hover:shadow-md transition cursor-pointer">
-      
-      <div className="relative">
-        <img src={img} alt={name} className="w-12 h-12 rounded-full object-cover border border-gray-50" />
-        <div className={`absolute top-0 left-0 w-3.5 h-3.5 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+    <div 
+      className="bg-white p-7 rounded-[45px] border border-gray-100 shadow-sm flex items-center hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer animate-in fade-in"
+      style={{ animationDelay: `${idx * 80}ms` }}
+    >
+      <div className="relative shrink-0">
+        <img src={img} alt={name} className="w-20 h-20 rounded-[30px] object-cover border-4 border-gray-50 group-hover:rotate-6 transition-transform shadow-lg" />
+        <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 border-4 border-white shadow-lg flex items-center justify-center">
+           <Activity className="w-3.5 h-3.5 text-white" />
+        </div>
       </div>
       
-      <div className="ml-4 flex-1">
-        <h4 className="font-bold text-gray-900 text-[15px] leading-tight">{name}</h4>
-        <p className="text-gray-500 text-[12px] mt-1">{role}</p>
-        <div className="flex items-center gap-1.5 mt-1 text-[#4f46e5] font-semibold text-[11px]">
-          {icon}
-          <span>{dept}</span>
+      <div className="ml-8 flex-1 text-black">
+        <h4 className="font-black text-black text-2xl tracking-tight leading-tight group-hover:text-[#4f46e5] transition-colors uppercase">{name}</h4>
+        <div className="flex flex-wrap items-center gap-4 mt-2 mb-3">
+           <span className="text-[#4f46e5] font-black text-[11px] uppercase tracking-[2px] bg-indigo-50 px-3 py-1.5 rounded-xl">{role}</span>
+           <span className="text-gray-400 font-bold text-[11px] uppercase tracking-widest flex items-center gap-1.5">
+             <Landmark className="w-3.5 h-3.5" /> {dept}
+           </span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-400 text-[13px] font-bold italic">
+           <Mail className="w-4 h-4" /> {email}
         </div>
       </div>
 
-      <div className="flex flex-col items-center">
-        <div 
-          onClick={(e) => {
-            e.stopPropagation();
-            alert(`Opening chat with ${name}...`);
-          }}
-          className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center cursor-pointer hover:bg-indigo-100 transition shadow-sm border border-indigo-100/50">
-          <MessageSquare className="text-[#4f46e5] w-5 h-5" />
+      <div className="flex flex-col items-end gap-3 px-2">
+        <div className="flex gap-2">
+           <button className="w-12 h-12 rounded-[20px] bg-indigo-50 text-[#4f46e5] flex items-center justify-center hover:bg-[#4f46e5] hover:text-white transition shadow-sm border border-indigo-100">
+              <MessageSquare className="w-6 h-6" />
+           </button>
+           <button className="w-12 h-12 rounded-[20px] bg-gray-50 text-gray-300 flex items-center justify-center hover:bg-black hover:text-white transition shadow-sm border border-gray-100">
+              <Award className="w-6 h-6" />
+           </button>
         </div>
-        <span className={`text-[10px] font-bold mt-1.5 ${isOnline ? 'text-green-500' : 'text-gray-400'}`}>
-          {isOnline ? 'Online' : 'Offline'}
-        </span>
+        <div className="bg-gray-50 p-1.5 rounded-full px-4 border border-gray-100">
+           <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600">Verified Member</span>
+        </div>
       </div>
-
     </div>
   );
 }

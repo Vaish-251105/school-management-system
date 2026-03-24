@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Mail, Lock, User, Briefcase } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Briefcase, ArrowLeft } from "lucide-react";
 import api from "../utils/api";
 
 export default function Signup() {
@@ -25,8 +25,7 @@ export default function Signup() {
     setLoading(true);
     
     try {
-      const response = await api.post("/auth/register", { name, email, password, role });
-
+      await api.post("/auth/register", { name, email, password, role });
       alert("Account created successfully! Please login.");
       navigate("/login");
     } catch (err) {
@@ -38,34 +37,34 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] dark:bg-gray-900 p-4 text-gray-900 dark:text-white font-sans transition-colors duration-300">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] p-4 text-black font-sans transition-all animate-in fade-in">
       
       {/* Header / Logo */}
-      <div className="flex flex-col items-center mb-8">
-        <div className="bg-[#4f46e5] p-4 rounded-2xl shadow-lg mb-4">
-          <GraduationCap className="text-white w-10 h-10" />
+      <div className="flex flex-col items-center mb-8 text-center">
+        <div className="bg-[#1e1b4b] p-5 rounded-3xl shadow-2xl mb-6">
+          <GraduationCap className="text-white w-12 h-12" />
         </div>
-        <h1 className="text-3xl font-bold dark:text-white mb-2">Join Smart School</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm italic">Empowering the next generation of learners</p>
+        <h1 className="text-4xl font-black text-black mb-2 uppercase tracking-tight">Create Account</h1>
+        <p className="text-gray-400 text-sm font-bold uppercase tracking-widest italic">Join the official school portal</p>
       </div>
 
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+      <div className="w-full max-w-md bg-white rounded-[40px] shadow-3xl border border-gray-100 p-10 relative overflow-hidden">
         
         {/* Role Selector */}
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            I am a...
+        <div className="mb-8">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-2">
+            SELECT YOUR ROLE
           </label>
-          <div className="bg-gray-50 dark:bg-gray-900 p-1.5 rounded-xl flex flex-wrap gap-1 justify-center border border-gray-100 dark:border-gray-700">
+          <div className="bg-gray-50 p-2 rounded-2xl flex flex-wrap gap-2 justify-center border border-gray-100">
             {roles.map((r) => (
               <button
                 key={r.id}
                 type="button"
                 onClick={() => setRole(r.id)}
-                className={`flex-1 min-w-[30%] py-2 text-[11px] font-bold rounded-lg uppercase tracking-wider transition-all duration-200 ${
+                className={`flex-1 min-w-[30%] py-2.5 text-[11px] font-black rounded-xl uppercase tracking-wider transition-all duration-300 ${
                   role === r.id
-                    ? "bg-[#4f46e5] text-white shadow-md"
-                    : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    ? "bg-[#1e1b4b] text-white shadow-xl"
+                    : "text-gray-400 hover:text-[#1e1b4b] hover:bg-white"
                 }`}
               >
                 {r.label}
@@ -74,83 +73,67 @@ export default function Signup() {
           </div>
         </div>
 
-        <form onSubmit={handleSignup}>
-          {/* Name */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Full Name
-            </label>
+        <form onSubmit={handleSignup} className="space-y-6">
+          <div className="space-y-1.5 px-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Full Name</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
-              </div>
+              <User className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
               <input
                 type="text"
                 required
-                placeholder="John Doe"
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent transition-all dark:text-white"
+                placeholder="Rahul Kumar"
+                className="w-full pl-14 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white transition-all font-bold text-lg text-black"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Email */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Email Address
-            </label>
+          <div className="space-y-1.5 px-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Email Address</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
+              <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
               <input
                 type="email"
                 required
-                placeholder="johndoe@example.com"
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent transition-all dark:text-white"
+                placeholder="user@school.edu"
+                className="w-full pl-14 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white transition-all font-bold text-lg text-black"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Password */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Create Password
-            </label>
+          <div className="space-y-1.5 px-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
+              <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
               <input
                 type="password"
                 required
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent transition-all dark:text-white"
+                className="w-full pl-14 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white transition-all font-bold text-lg text-black"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Join Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#4f46e5] text-white font-bold py-4 rounded-xl hover:bg-[#4338ca] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 mb-6 flex items-center justify-center gap-2"
+            className="w-full bg-black text-white font-black py-6 rounded-3xl hover:bg-gray-800 shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-widest disabled:opacity-50"
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? "Creating Account..." : "Confirm & Join"}
           </button>
 
-          <div className="text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Already have an account?{" "}
+          <div className="text-center pt-2">
+            <p className="text-[13px] text-gray-400 font-bold">
+              Already a member?{" "}
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="font-bold text-[#4f46e5] hover:underline"
+                className="font-black text-indigo-600 hover:underline px-2"
               >
                 Sign In
               </button>
@@ -160,9 +143,12 @@ export default function Signup() {
 
       </div>
 
-      <div className="mt-8 text-sm text-gray-400 dark:text-gray-500 max-w-sm text-center bg-white/50 dark:bg-black/20 p-4 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-        By joining, you agree to our <a href="#" className="font-semibold text-[#4f46e5] hover:underline">Terms of Service</a> and <a href="#" className="font-semibold text-[#4f46e5] hover:underline">Privacy Policy</a>.
-      </div>
+      <button 
+        onClick={() => navigate('/login')}
+        className="mt-8 flex items-center gap-2 text-gray-400 font-black text-[11px] uppercase tracking-widest hover:text-black transition active:scale-95"
+      >
+        <ArrowLeft className="w-5 h-5" /> Back to Workspace
+      </button>
 
     </div>
   );

@@ -291,7 +291,7 @@ class _ExamResultsScreenState extends State<ExamResultsScreen> {
               if (results.isNotEmpty) ...[
                 const Text("Results", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 12),
-                ...results.asMap().entries.map((e) {
+                ...results.asMap().entries.map<Widget>((e) {
                   final result = e.value;
                   final name = result['studentName'] ?? "Student ${e.key + 1}";
                   final marks = result['marks'] ?? 0;

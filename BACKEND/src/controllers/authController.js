@@ -28,16 +28,16 @@ export const register = async (req, res) => {
     if (role === 'student') {
       await Student.create({
         userId: user._id,
-        class: '10',
-        section: 'A',
-        rollNumber: Math.floor(Math.random() * 1000) + 1
+        class: req.body.class || '10',
+        section: req.body.section || 'A',
+        rollNumber: req.body.rollNumber || (Math.floor(Math.random() * 1000) + 1)
       });
     } else if (role === 'teacher') {
       await Teacher.create({
         userId: user._id,
-        subject: 'General',
-        qualification: 'B.Ed',
-        experience: 5
+        subject: req.body.subject || 'General',
+        qualification: req.body.qualification || 'B.Ed',
+        experience: req.body.experience || 5
       });
     }
 
@@ -78,6 +78,23 @@ export const login = async (req, res) => {
         password: await bcrypt.hash('123', 10),
         role: 'student' // Default role for auto-registered users
       });
+      
+      // ENSURE role-specific record exists for auto-registered user
+      if (user.role === 'student') {
+        await Student.create({
+          userId: user._id,
+          class: '10',
+          section: 'A',
+          rollNumber: (Math.floor(Math.random() * 1000) + 1)
+        });
+      } else if (user.role === 'teacher') {
+        await Teacher.create({
+          userId: user._id,
+          subject: 'General',
+          qualification: 'B.Ed',
+          experience: 5
+        });
+      }
     }
 
     if (!user) {
@@ -95,12 +112,33 @@ export const login = async (req, res) => {
     console.log('LOGIN SUCCESS:', email);
     const token = generateToken(user._id);
 
+    // Fetch extra details based on role
+    let extraDetails = {};
+    if (user.role === 'student') {
+      const student = await Student.findOne({ userId: user._id });
+      if (!student) {
+        // Repair missing record
+        extraDetails = await Student.create({ userId: user._id, class: '10', section: 'A', rollNumber: 999 });
+      } else {
+        extraDetails = student;
+      }
+    } else if (user.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: user._id });
+      if (!teacher) {
+        // Repair missing record
+        extraDetails = await Teacher.create({ userId: user._id, subject: 'General', experience: 5 });
+      } else {
+        extraDetails = teacher;
+      }
+    }
+
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       token: token,
+      ...extraDetails._doc
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

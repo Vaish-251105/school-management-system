@@ -11,6 +11,10 @@ import '../auth/login_screen.dart';
 import '../modules/notification_screen.dart';
 import '../modules/calendar_screen.dart';
 import '../profile/user_profile.dart';
+import '../modules/fees_screen.dart';
+import './analytics_screen.dart';
+import 'staff_attendance.dart';
+import '../student/student_directory.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -111,9 +115,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
                               icon: const Icon(LucideIcons.user, color: Colors.white, size: 24),
                             ),
+                            IconButton(
+                              onPressed: () {
+                                context.read<AuthService>().logout();
+                                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                              },
+                              icon: const Icon(LucideIcons.logOut, color: Colors.white, size: 20),
+                            ),
                           ],
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 32),
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffDirectoryScreen())),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(LucideIcons.search, color: Colors.white70, size: 18),
+                            const SizedBox(width: 12),
+                            Text("Search teachers, students, staff...", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 32),
                     isLoading 
@@ -151,14 +181,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       children: [
                         AdminCard("Staff List", "New faculty", LucideIcons.userPlus, Colors.blue, 
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffDirectoryScreen()))),
+                        AdminCard("Staff Attendance", "Mark/View", LucideIcons.userCheck, Colors.indigo, 
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffAttendanceScreen()))),
                         AdminCard("Classes", "Manage sections", LucideIcons.layout, Colors.purple,
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClassesSubjectsScreen()))),
                         AdminCard("Announce", "Bulk updates", LucideIcons.megaphone, Colors.orange, 
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()))),
-                        AdminCard("Analytics", "Growth reports", LucideIcons.barChart3, Colors.green, onTap: () {}),
-                        AdminCard("Fees Status", "Audit dues", LucideIcons.wallet, Colors.teal, onTap: () {}),
-                        AdminCard("Calendar", "Institutional events", LucideIcons.calendar, Colors.indigo, 
+                        AdminCard("Analytics", "Growth reports", LucideIcons.barChart3, Colors.green, 
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AnalyticsScreen()))),
+                         AdminCard("Fees Status", "Audit dues", LucideIcons.wallet, Colors.teal, 
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen()))),
+                        AdminCard("Calendar", "Events", LucideIcons.calendar, Colors.amber, 
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AcademicCalendarScreen()))),
+                         AdminCard("Students", "Roster", LucideIcons.graduationCap, Colors.pink, 
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentDirectoryScreen()))),
                       ],
                     ),
                     

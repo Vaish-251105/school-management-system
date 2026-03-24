@@ -1,14 +1,29 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../services/api_service.dart';
 
-class StaffProfileScreen extends StatelessWidget {
-  const StaffProfileScreen({super.key});
+class StaffProfileScreen extends StatefulWidget {
+  final dynamic staff;
+  const StaffProfileScreen({super.key, this.staff});
 
+  @override
+  State<StaffProfileScreen> createState() => _StaffProfileScreenState();
+}
+
+class _StaffProfileScreenState extends State<StaffProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    final staff = widget.staff ?? {};
+    final user = staff['userId'] ?? {};
+    final name = user['name'] ?? "Staff Member";
+    final role = user['role']?.toString().toUpperCase() ?? "STAFF";
+    final email = user['email'] ?? "N/A";
+    final subject = staff['subject'] ?? "General";
+    final exp = staff['experience']?.toString() ?? "N/A";
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -42,10 +57,9 @@ class StaffProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const Text("Staff Profile", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(LucideIcons.moreVertical, color: Colors.white, size: 24),
+                IconButton(
+                  onPressed: () => _confirmDelete(),
+                  icon: const Icon(LucideIcons.trash2, color: Colors.white, size: 24),
                 ),
               ],
             ),
@@ -79,20 +93,12 @@ class StaffProfileScreen extends StatelessWidget {
                                 color: isDark ? Colors.white10 : Colors.grey.shade100,
                                 border: Border.all(color: theme.colorScheme.surface, width: 4),
                               ),
-                              child: const Icon(LucideIcons.user, size: 50, color: Colors.grey),
+                              child: Center(child: Text(name[0], style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold))),
                             ),
-                            Positioned(
-                              bottom: 0, right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(color: theme.colorScheme.surface, shape: BoxShape.circle),
-                                child: const Icon(LucideIcons.checkCircle, color: Colors.green, size: 24),
-                              ),
-                            )
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Text("Alexander Bennett", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                        Text(name, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -100,13 +106,13 @@ class StaffProfileScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                              child: Text("Senior Faculty", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                              child: Text(role, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
                             ),
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                              child: Text("Mathematics", style: TextStyle(color: isDark ? Colors.white70 : AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 12)),
+                              child: Text(subject, style: TextStyle(color: isDark ? Colors.white70 : AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 12)),
                             ),
                           ],
                         ),
@@ -119,9 +125,9 @@ class StaffProfileScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _buildProfileStat(context, "6", "Classes"),
-                            _buildProfileStat(context, "8+", "Years Exp"),
-                            _buildProfileStat(context, "4.9", "Rating"),
+                            _buildProfileStat(context, "N/A", "Classes"),
+                            _buildProfileStat(context, exp, "Years Exp"),
+                            _buildProfileStat(context, "5.0", "Rating"),
                           ],
                         )
                       ],
@@ -135,19 +141,22 @@ class StaffProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Personal Information", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 15)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                        child: Text("EDIT", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : AppColors.textDark)),
+                      GestureDetector(
+                        onTap: _showEditDialog,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                          child: Text("EDIT", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : AppColors.textDark)),
+                        ),
                       )
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  _buildInfoTile(context, LucideIcons.mail, "Institutional Email", "a.bennett@smartschool.edu"),
-                  _buildInfoTile(context, LucideIcons.phone, "Contact Number", "+1 (555) 0123-4567"),
-                  _buildInfoTile(context, LucideIcons.book, "Primary Department", "Mathematics & Physics"),
-                  _buildInfoTile(context, LucideIcons.badgeCheck, "Employee ID", "EMP-089-2024"),
+                  _buildInfoTile(context, LucideIcons.mail, "Institutional Email", email),
+                  _buildInfoTile(context, LucideIcons.phone, "Contact Number", "+1 (555) 000-0000"),
+                  _buildInfoTile(context, LucideIcons.book, "Primary Department", subject),
+                  _buildInfoTile(context, LucideIcons.badgeCheck, "Employee ID", (staff['_id'] ?? '...').toString().substring(0,8).toUpperCase()),
 
                   const SizedBox(height: 30),
 
@@ -168,6 +177,72 @@ class StaffProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog() {
+    final staff = widget.staff ?? {};
+    final user = staff['userId'] ?? {};
+    final nameController = TextEditingController(text: user['name'] ?? "");
+    final subjectController = TextEditingController(text: staff['subject'] ?? "");
+    final expController = TextEditingController(text: staff['experience']?.toString() ?? "");
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Staff Profile"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: "Name")),
+            TextField(controller: subjectController, decoration: const InputDecoration(labelText: "Subject/Dept")),
+            TextField(controller: expController, decoration: const InputDecoration(labelText: "Experience (Years)"), keyboardType: TextInputType.number),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              final id = staff['_id'];
+              if (id != null) {
+                await ApiService.updateTeacher(id, {
+                  "name": nameController.text,
+                  "subject": subjectController.text,
+                  "experience": int.tryParse(expController.text) ?? 0,
+                });
+                Navigator.pop(context);
+                Navigator.pop(context); // Refresh directory
+              }
+            }, 
+            child: const Text("Save Changes")
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Staff"),
+        content: const Text("Are you sure you want to delete this staff member? This will also delete their user account."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              final id = widget.staff?['_id'];
+              if (id != null) {
+                await ApiService.deleteTeacher(id);
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Back to directory
+              }
+            }, 
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Delete", style: TextStyle(color: Colors.white))
           ),
         ],
       ),

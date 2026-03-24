@@ -13,6 +13,8 @@ router.delete('/:id', roleMiddleware(['admin']), teacherController.deleteTeacher
 
 // Admin & Teacher can view
 router.get('/', roleMiddleware(['admin', 'teacher']), teacherController.getTeachers);
+router.get('/staff/all', roleMiddleware(['admin']), teacherController.getStaff);
+router.get('/recipients', teacherController.getRecipients);
 router.get('/:id', roleMiddleware(['admin', 'teacher']), teacherController.getTeacherById);
 
 export default router;

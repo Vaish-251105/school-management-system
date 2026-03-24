@@ -23,7 +23,7 @@ class ExamsScreen extends StatelessWidget {
           icon: const Icon(LucideIcons.download, color: AppColors.primary)
         ),
         IconButton(
-          onPressed: () => _viewReportCard(),
+          onPressed: () => _viewReportCard(context),
           icon: const Icon(LucideIcons.fileText, color: AppColors.primary)
         )
       ],
@@ -125,7 +125,7 @@ class ExamsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text("Detailed Marks", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  _termButton(),
+                  _termButton(context),
                 ],
               ),
             ),
@@ -146,9 +146,35 @@ class ExamsScreen extends StatelessWidget {
               ],
             ),
             
-            const SizedBox(height: 40),
+            const SizedBox(height: 100),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text("Preparing Exam Analytics PDF..."),
+                ],
+              ),
+            ),
+          );
+          await Future.delayed(const Duration(seconds: 1));
+          if (context.mounted) {
+            Navigator.pop(context);
+             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("PDF exported successfully!"), backgroundColor: Colors.indigo));
+          }
+        },
+        backgroundColor: const Color(0xFF4F46E5),
+        icon: const Icon(LucideIcons.download, color: Colors.white),
+        label: const Text("Download Report Card", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -185,43 +211,63 @@ class ExamsScreen extends StatelessWidget {
     );
   }
 
-  void _viewReportCard() {
+  void _viewReportCard(BuildContext context) async {
+     // DOWNLOAD SIMULATION
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(children: [Icon(LucideIcons.fileText), SizedBox(width: 8), Text("Report Card")]),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              _reportCardItem("Mathematics", "85/100", "A", Colors.blue),
-              _reportCardItem("Science", "92/100", "A+", Colors.green),
-              _reportCardItem("English", "78/100", "B+", Colors.orange),
-              _reportCardItem("History", "88/100", "A", Colors.blue),
-              _reportCardItem("Computer Science", "95/100", "A+", Colors.green),
-              _reportCardItem("Arts & Crafts", "82/100", "B", Colors.orange),
-              const Divider(height: 20),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text("Overall GPA: 3.85 / 4.0", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const Text("Percentage: 89.4%", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const Text("Rank: 4th / 45", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Report card downloaded!"))),
-                    icon: const Icon(LucideIcons.download, size: 16),
-                    label: const Text("Download PDF"),
-                  ),
-                ]),
-              ),
-            ],
-          ),
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 20),
+            Text("Generating PDF Report Card..."),
+          ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
       ),
     );
+    await Future.delayed(const Duration(seconds: 2));
+    if (context.mounted) Navigator.pop(context);
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(children: [Icon(LucideIcons.fileText), SizedBox(width: 8), Text("Report Card")]),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                _reportCardItem("Mathematics", "85/100", "A", Colors.blue),
+                _reportCardItem("Science", "92/100", "A+", Colors.green),
+                _reportCardItem("English", "78/100", "B+", Colors.orange),
+                _reportCardItem("History", "88/100", "A", Colors.blue),
+                _reportCardItem("Computer Science", "95/100", "A+", Colors.green),
+                _reportCardItem("Arts & Crafts", "82/100", "B", Colors.orange),
+                const Divider(height: 20),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text("Overall GPA: 3.85 / 4.0", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text("Percentage: 89.4%", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text("Rank: 4th / 45", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("PDF saved to downloads!"), backgroundColor: Colors.green)),
+                      icon: const Icon(LucideIcons.download, size: 16),
+                      label: const Text("Download PDF"),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+        ),
+      );
+    }
   }
 
   Widget _reportCardItem(String subject, String score, String grade, Color color) {
@@ -254,7 +300,7 @@ class ExamsScreen extends StatelessWidget {
   }
 
 
-  Widget _termButton() {
+  Widget _termButton(BuildContext context) {
     return PopupMenuButton<String>(
       onSelected: (value) {
         ScaffoldMessenger.of(context).showSnackBar(

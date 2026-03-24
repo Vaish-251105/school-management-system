@@ -8,6 +8,10 @@ import '../../services/api_service.dart';
 import '../auth/login_screen.dart';
 import '../modules/fees_screen.dart';
 
+import './salary_screen.dart';
+import '../admin/staff_attendance.dart';
+import '../modules/notification_screen.dart';
+
 class AccountantDashboard extends StatefulWidget {
   const AccountantDashboard({super.key});
 
@@ -167,10 +171,12 @@ class _AccountantDashboardState extends State<AccountantDashboard> {
                           crossAxisSpacing: 16,
                           childAspectRatio: 1.4,
                           children: [
-                            _buildFinCard(context, "Fees", "Manage Payments", LucideIcons.plusCircle, Colors.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen())).then((_) => _loadFinanceData())),
-                            _buildFinCard(context, "Expenses", "Record Spending", LucideIcons.trendingDown, Colors.red, () => _showExpenseEntry()),
-                            _buildFinCard(context, "Payroll", "Staff Salaries", LucideIcons.users, Colors.indigo, () {}),
-                            _buildFinCard(context, "Sync", "Refresh Data", LucideIcons.refreshCw, Colors.orange, _loadFinanceData),
+                            _buildFinCard(context, "Fees", "Payments", LucideIcons.plusCircle, Colors.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen()))),
+                            _buildFinCard(context, "Expenses", "Spend Log", LucideIcons.trendingDown, Colors.red, () => _showExpenseEntry()),
+                            _buildFinCard(context, "Payroll", "Salaries", LucideIcons.users, Colors.indigo, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SalaryScreen()))),
+                            _buildFinCard(context, "Staff Attendance", "Logs", LucideIcons.userCheck, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffAttendanceScreen()))),
+                            _buildFinCard(context, "Notices", "Bulk", LucideIcons.megaphone, Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()))),
+                            _buildFinCard(context, "Sync", "Refresh", LucideIcons.refreshCw, Colors.green, _loadFinanceData),
                           ],
                         ),
                         
@@ -178,7 +184,7 @@ class _AccountantDashboardState extends State<AccountantDashboard> {
                         Text("Recent Ledger Logs",
                             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
                         const SizedBox(height: 16),
-                        ..._recentTxs.map((tx) => _buildTxTile(
+                        ..._recentTxs.map<Widget>((tx) => _buildTxTile(
                           tx['isFee'] ? (tx['studentId']?['name'] ?? "Student Fee") : (tx['title'] ?? "Expense"), 
                           tx['isFee'] ? "Fee Receipt" : "Operation Spend", 
                           "${tx['isFee'] ? '+' : '-'} ₹${tx['amount']}", 

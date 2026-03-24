@@ -3,12 +3,47 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
-class TimetableScreen extends StatelessWidget {
+class TimetableScreen extends StatefulWidget {
   const TimetableScreen({super.key});
 
   @override
+  State<TimetableScreen> createState() => _TimetableScreenState();
+}
+
+class _TimetableScreenState extends State<TimetableScreen> {
+  String _selectedClass = "10";
+  bool _isLoading = true;
+  List<dynamic> _periods = [];
+  final List<String> _classes = ["8", "9", "10", "11", "12"];
+  final List<String> _days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  String _activeDay = "MON";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTimetable();
+  }
+
+  Future<void> _loadTimetable() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await ApiService.getTimetableByClass(_selectedClass);
+      if (mounted) {
+        setState(() {
+          _periods = res.isNotEmpty ? res[0]['periods'] : [];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final userRole = context.watch<AuthService>().role;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -27,49 +62,97 @@ class TimetableScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          _buildDayPicker(context),
+          _buildClassSelector(),
+          _buildDayPicker(),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                _classTile(context, "08:30 AM", "Mathematics", "Calculus & Algebra", "Room 204", Colors.indigo),
-                _classTile(context, "10:15 AM", "Physics", "Quantum Mechanics", "Hall A", Colors.teal),
-                _classTile(context, "12:00 PM", "Lunch Break", "Cafeteria", "Ground Floor", Colors.orange),
-                _classTile(context, "01:30 PM", "English", "Hamlet analysis", "Room 105", Colors.pink),
-              ],
-            ),
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator())
+              : _periods.isEmpty 
+                ? const Center(child: Text("No classes scheduled yet"))
+                : ListView.builder(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: _periods.length,
+                    itemBuilder: (context, index) {
+                      final p = _periods[index];
+                      return _classTile(
+                        context, 
+                        p['startTime'] ?? "--", 
+                        p['subject'] ?? "General", 
+                        "Advanced Study", 
+                        p['room'] ?? "Room 101", 
+                        Colors.indigo
+                      );
+                    },
+                  ),
           ),
         ],
       ),
+      floatingActionButton: (userRole == 'teacher' || userRole == 'admin') 
+        ? FloatingActionButton.extended(
+            onPressed: () => _showEditDialog(),
+            backgroundColor: AppColors.primary,
+            icon: const Icon(LucideIcons.edit3, color: Colors.white),
+            label: const Text("Edit Schedule", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          )
+        : null,
     );
   }
 
-  Widget _buildDayPicker(BuildContext context) {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+  Widget _buildClassSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
         children: [
-          _dayChip("MON", "23", true),
-          _dayChip("TUE", "24", false),
-          _dayChip("WED", "25", false),
-          _dayChip("THU", "26", false),
-          _dayChip("FRI", "27", false),
-          _dayChip("SAT", "28", false),
+          const Text("Select Class: ", style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(width: 12),
+          DropdownButton<String>(
+            value: _selectedClass,
+            items: _classes.map((c) => DropdownMenuItem(value: c, child: Text("Grade $c"))).toList(),
+            onChanged: (val) {
+              if (val != null) {
+                setState(() => _selectedClass = val);
+                _loadTimetable();
+              }
+            },
+          )
         ],
       ),
     );
   }
 
-  Widget _dayChip(String day, String date, bool isSelected) {
+  Widget _buildDayPicker() {
     return Container(
-      margin: const EdgeInsets.only(right: 12),
-      width: 60,
-      decoration: BoxDecoration(color: isSelected ? AppColors.primary : Colors.transparent, borderRadius: BorderRadius.circular(20), border: Border.all(color: isSelected ? AppColors.primary : AppColors.border.withOpacity(0.1))),
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(day, style: TextStyle(color: isSelected ? Colors.white : AppColors.textLight, fontSize: 10, fontWeight: FontWeight.bold)), const SizedBox(height: 4), Text(date, style: TextStyle(color: isSelected ? Colors.white : AppColors.textDark, fontSize: 16, fontWeight: FontWeight.bold))]),
+      height: 70,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: _days.length,
+        itemBuilder: (context, index) {
+          final d = _days[index];
+          final isSelected = _activeDay == d;
+          return GestureDetector(
+            onTap: () => setState(() => _activeDay = d),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              width: 60,
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.transparent, 
+                borderRadius: BorderRadius.circular(16), 
+                border: Border.all(color: isSelected ? AppColors.primary : AppColors.border.withOpacity(0.1))
+              ),
+              child: Center(
+                child: Text(d, style: TextStyle(color: isSelected ? Colors.white : AppColors.textLight, fontSize: 11, fontWeight: FontWeight.bold))
+              ),
+            ),
+          );
+        },
+      ),
     );
+  }
+
+  void _showEditDialog() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Table editor coming in next update... (API ready)")));
   }
 
   Widget _classTile(BuildContext context, String time, String subject, String topic, String room, Color color) {
@@ -84,7 +167,7 @@ class TimetableScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(width: 12, height: 60, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6))),
+          Container(width: 8, height: 50, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
           const SizedBox(width: 20),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(subject, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

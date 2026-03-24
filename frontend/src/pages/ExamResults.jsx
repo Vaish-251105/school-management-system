@@ -4,7 +4,17 @@ import {
   Download,
   Check,
   MessageSquare,
-  Receipt
+  Receipt,
+  X,
+  Award,
+  BookOpen,
+  TrendingUp,
+  Loader2,
+  User,
+  GraduationCap,
+  Activity,
+  Globe,
+  ChevronRight
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
@@ -14,10 +24,12 @@ export default function ExamResults() {
   const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showFullReport, setShowFullReport] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
       try {
+        setLoading(true);
         const response = await api.get("/exams/results");
         setResults(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
@@ -29,164 +41,226 @@ export default function ExamResults() {
     fetchResults();
   }, []);
 
-  const totalMarks = results.reduce((acc, r) => acc + r.marks, 0);
-  const totalPossible = results.reduce((acc, r) => acc + r.totalMarks, 0);
+  const totalMarks = results.reduce((acc, r) => acc + (Number(r.marks) || 0), 0);
+  const totalPossible = results.reduce((acc, r) => acc + (Number(r.totalMarks) || 100), 0);
   const percentage = totalPossible > 0 ? ((totalMarks / totalPossible) * 100).toFixed(1) : "0.0";
-  const gpa = (parseFloat(percentage) / 25).toFixed(2); // Rough conversion for demo
+  const gpa = (parseFloat(percentage) / 25).toFixed(2); 
 
-  const initials = user.name ? user.name.split(' ').map(n => n[0]).join('') : "JD";
+  const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : "US";
 
+  if (loading) return (
+     <div className="flex flex-col items-center justify-center min-h-screen bg-[#fafafa]">
+       <Loader2 className="w-12 h-12 animate-spin text-[#4f46e5] mb-6" />
+       <p className="text-gray-400 font-black italic tracking-widest uppercase">Loading Results...</p>
+     </div>
+  );
 
   return (
-    <div className="bg-[#f9fafb] min-h-screen font-sans flex flex-col pb-10 text-gray-900">
+    <div className="bg-[#fafafa] min-h-screen pb-32 font-sans animate-in fade-in transition-all">
       
       {/* HEADER AREA */}
-      <div className="bg-[#f9fafb] px-6 pt-12 pb-4 flex justify-between items-center z-10 sticky top-0">
-        <button 
-          onClick={() => navigate(-1)}
-          className="text-gray-900 p-2 -ml-2 hover:bg-gray-100 rounded-full transition">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-gray-900 text-lg font-bold">Exam Results</h1>
-        <button 
-          onClick={() => alert("Downloading digital report card...")}
-          className="text-[#4f46e5] p-2 -mr-2 hover:bg-indigo-50 rounded-full transition">
-          <Download className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* BODY CONTENT */}
-      <div className="max-w-4xl mx-auto px-6 mt-2 w-full flex-1">
-        
-        {/* BANNER */}
-        <div className="bg-[#4f46e5] rounded-3xl p-6 shadow-[0_8px_15px_rgba(79,70,229,0.3)] flex items-center mb-6">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shrink-0">
-            <span className="text-[#4f46e5] font-bold text-[20px]">{initials}</span>
-          </div>
-          <div className="ml-5 flex-1">
-            <h2 className="text-white text-[20px] font-bold">{user.name || "John Doe"}</h2>
-            <p className="text-white/80 text-[12px] mt-1 tracking-wide">ID: #{user._id?.slice(-6).toUpperCase() || "STU90210"} • Class 10-B</p>
-            <div className="inline-block bg-white/20 px-3 py-1.5 rounded-full mt-3">
-              <span className="text-white font-bold text-[10px]">Final Term Examination 2023-24</span>
+      <div className="bg-[#1e1b4b] px-8 pt-12 pb-16 rounded-b-[60px] shadow-2xl relative overflow-hidden shrink-0">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-5xl mx-auto relative z-10 flex justify-between items-center text-white">
+          <div className="flex gap-6 items-center animate-in slide-in-from-bottom duration-700">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl backdrop-blur-md active:scale-95 group">
+              <ChevronLeft className="w-7 h-7 text-white" />
+            </button>
+            <div>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-[3px] mb-1">Academic Records</p>
+              <h1 className="text-white text-[32px] font-black leading-tight uppercase tracking-tight">Exam Results</h1>
             </div>
           </div>
-        </div>
-
-        {/* STATS */}
-        <div className="flex gap-2 mb-6">
-          <StatBox label="GPA" val="3.85" sub="/ 4.0" />
-          <StatBox label="Percentage" val="89.4" sub="%" />
-          <StatBox label="Rank" val="4th" sub="/ 45" />
-        </div>
-
-        {/* BAR CHART MOCK */}
-        <div className="bg-white border border-gray-100 rounded-[20px] p-5 mb-6 shadow-sm">
-          <h3 className="font-bold text-gray-900 text-[16px] mb-8">Subject Wise Analysis</h3>
-          <div className="flex justify-around items-end h-[140px] px-2 relative">
-            <div className="absolute top-1/2 left-0 w-full h-px bg-gray-100"></div>
-            <Bar label="Math" ht="85%" />
-            <Bar label="Sci" ht="95%" />
-            <Bar label="Eng" ht="70%" />
-            <Bar label="His" ht="80%" />
-            <Bar label="CS" ht="100%" />
-            <Bar label="Art" ht="75%" />
+          <div className="flex items-center gap-4">
+             <button onClick={() => alert("Downloading PDF...")} className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition group shadow-2xl backdrop-blur-md text-white">
+               <Download className="w-7 h-7" />
+             </button>
           </div>
         </div>
 
-        {/* DETAILED MARKS HEADER */}
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-gray-900 font-bold text-[18px]">Detailed Marks</h3>
-          <button 
-            onClick={() => alert("Showing marks for Term 2. Click to toggle Term 1.")}
-            className="bg-[#4f46e5] text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-600 transition">
-            <Check className="w-3.5 h-3.5" /> Term 2
-          </button>
+        {/* PROFILE BANNER */}
+        <div className="max-w-5xl mx-auto mt-12 flex items-center gap-8 relative z-10 animate-in slide-in-from-bottom duration-1000">
+           <div className="w-24 h-24 bg-white/10 backdrop-blur-md border border-white/20 rounded-[35px] flex items-center justify-center font-black text-white text-3xl shadow-inner group transition-transform">
+              {initials}
+           </div>
+           <div>
+              <h2 className="text-white text-3xl font-black uppercase tracking-tight">{user.name || "Student"}</h2>
+              <div className="flex items-center gap-4 mt-2">
+                 <span className="text-indigo-200 font-black text-[10px] uppercase tracking-[4px]">Verified Record</span>
+                 <div className="bg-emerald-500 w-2 h-2 rounded-full animate-pulse"></div>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-8 mt-12 w-full flex-1 text-black font-sans">
+        
+        {/* PERFORMANCE STATS */}
+        <div className="grid grid-cols-3 gap-6 mb-12 animate-in fade-in transition-all">
+           <ExamStat label="GPA" val={gpa} sub="/4.0" color="indigo" />
+           <ExamStat label="PERCENTAGE" val={percentage} sub="%" color="teal" />
+           <ExamStat label="ATTENDANCE" val="94.2" sub="%" color="amber" />
         </div>
 
-        {/* DETAILED MARKS LIST */}
-        <div className="bg-white border border-gray-100 rounded-[20px] shadow-sm mb-6 overflow-hidden">
-          {loading ? (
-            <div className="p-10 text-center">Loading results...</div>
-          ) : results.length > 0 ? (
-            results.map((r, idx) => (
-              <React.Fragment key={r._id}>
-                <MarkRow 
-                  init={r.subject[0]} 
-                  sub={r.subject} 
-                  grade={r.grade} 
-                  marks={r.marks} 
-                  status={r.marks >= (r.totalMarks * 0.4) ? "Pass" : "Fail"} 
-                />
-                {idx < results.length - 1 && <div className="h-px w-full bg-gray-100"></div>}
-              </React.Fragment>
-            ))
-          ) : (
-            <>
-              <MarkRow init="M" sub="Mathematics" grade="A" marks="85" status="Pass" />
-              <div className="h-px w-full bg-gray-100"></div>
-              <MarkRow init="S" sub="Science" grade="A+" marks="92" status="Pass" />
-            </>
+        <div className="flex justify-between items-end mb-8">
+           <h3 className="text-black font-black text-2xl tracking-tight uppercase leading-none">Subject Marks</h3>
+           <div className="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-2">
+             <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></div>
+             <span className="text-indigo-700 text-[10px] font-black uppercase tracking-widest leading-none">Synced</span>
+           </div>
+        </div>
+
+        <div className="grid gap-6 mb-16">
+          {results.length > 0 ? results.map((r, idx) => (
+             <SubjectRow 
+                key={r._id || idx}
+                idx={idx}
+                subject={r.subject} 
+                grade={r.grade || "A"} 
+                marks={r.marks} 
+                total={r.totalMarks || 100} 
+             />
+          )) : (
+            <div className="p-32 text-center bg-gray-50 border-4 border-dashed border-gray-100 rounded-[50px] flex flex-col items-center">
+               <Globe className="w-16 h-16 text-gray-200 mb-6" />
+               <p className="text-gray-400 font-black italic uppercase text-lg">No results found</p>
+            </div>
           )}
         </div>
 
-        {/* REMARKS */}
-        <div className="bg-indigo-50/50 border border-indigo-100/60 rounded-2xl p-5 mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <MessageSquare className="w-4 h-4 text-[#4f46e5]" />
-            <h4 className="text-[#4f46e5] font-bold text-[14px]">Teacher's Remarks</h4>
-          </div>
-          <p className="text-gray-800 text-[13px] leading-relaxed">
-            {user.name?.split(' ')[0] || "Student"} has shown exceptional growth in logical reasoning and computer sciences. Encouraged to participate more in English literary activities to improve verbal communication.
-          </p>
-        </div>
-
-        {/* FULL BUTTON */}
         <button 
-          onClick={() => alert("Opening Full Screen Report Card View...")}
-          className="w-full bg-[#4f46e5] text-white py-4 rounded-full font-bold shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 hover:bg-indigo-600 transition tracking-wide">
-          <Receipt className="w-5 h-5" /> View Full Report Card
+          onClick={() => setShowFullReport(true)}
+          className="w-full bg-black text-white py-6 rounded-[35px] font-black shadow-3xl hover:scale-105 active:scale-95 transition-all text-lg uppercase tracking-widest border border-white/10 group">
+          <Receipt className="w-7 h-7 text-teal-400" /> View Full Report Card
         </button>
 
       </div>
+
+      {/* REPORT CARD MODAL */}
+      {showFullReport && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-6">
+           <div className="bg-white w-full max-w-3xl rounded-[60px] overflow-hidden shadow-3xl text-black flex flex-col max-h-[90vh] animate-in zoom-in duration-300">
+              <div className="bg-[#1e1b4b] p-10 flex justify-between items-center shrink-0 border-b border-indigo-900 shadow-2xl">
+                 <div className="flex items-center gap-6">
+                    <div className="bg-white/10 p-5 rounded-[28px] border border-white/10 text-white">
+                       <Award className="w-10 h-10 text-emerald-400" />
+                    </div>
+                    <div>
+                       <h2 className="text-white text-3xl font-black uppercase tracking-tight">Full Report Card</h2>
+                       <p className="text-indigo-400 text-xs font-black mt-1 uppercase tracking-[3px]">Academic Session 2024</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowFullReport(false)} className="bg-white/10 p-5 rounded-3xl text-white hover:bg-black transition active:scale-90 shadow-sm border border-white/5">
+                    <X className="w-8 h-8" />
+                 </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-12 space-y-12 custom-scrollbar bg-white">
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <TranscriptDetail label="Student Name" val={user.name || "N/A"} icon={<User className="w-4 h-4" />} />
+                    <TranscriptDetail label="Grade" val="10-A" icon={<GraduationCap className="w-4 h-4" />} />
+                    <TranscriptDetail label="Rank" val="#04 / 45" icon={<Award className="w-4 h-4 text-emerald-500" />} />
+                    <TranscriptDetail label="Status" val="PASSED" icon={<Activity className="w-4 h-4 text-emerald-500" />} />
+                 </div>
+
+                 <div className="bg-gray-50 border border-gray-100 rounded-[45px] p-10 shadow-inner group">
+                    <h4 className="font-black text-sm uppercase tracking-widest text-[#4f46e5] mb-8 flex items-center gap-3">
+                       <BookOpen className="w-5 h-5" /> Detailed Assessment
+                    </h4>
+                    <div className="space-y-6">
+                       {results.map((r, i) => (
+                          <div key={i} className="flex justify-between items-center">
+                             <span className="text-black font-black text-lg uppercase group-hover/row:text-[#4f46e5] transition-colors">{r.subject}</span>
+                             <div className="flex-1 border-b-2 border-dotted border-gray-100 mx-6"></div>
+                             <div className="flex items-center gap-6">
+                                <span className="text-black font-black text-xl tabular-nums">{r.marks}<span className="text-gray-300 text-xs ml-1">/100</span></span>
+                                <span className="bg-indigo-50 text-[#4f46e5] px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-indigo-100 min-w-[50px] text-center">{r.grade}</span>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="bg-blue-50 p-10 rounded-[45px] relative overflow-hidden group border border-blue-100">
+                    <h4 className="font-black text-blue-900 text-xl uppercase tracking-widest mb-4 flex items-center gap-3">
+                       <Activity className="w-6 h-6 text-blue-600" /> Teacher Remarks
+                    </h4>
+                    <p className="text-blue-800/70 text-lg leading-relaxed italic font-bold mb-8">
+                       "Consistently performed well in all subjects. Exceptional progress in logical thinking. Recommended for advanced workshops."
+                    </p>
+                    <div className="flex items-center gap-4 relative z-10">
+                       <div className="w-12 h-12 rounded-2xl bg-blue-900 flex items-center justify-center font-black text-white">PR</div>
+                       <div>
+                          <p className="text-blue-900 font-black text-sm uppercase leading-none">Principal</p>
+                          <p className="text-blue-400 text-[10px] font-black mt-1 uppercase italic">Verified</p>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="p-10 border-t border-gray-50 flex gap-4 shrink-0 bg-gray-50">
+                 <button className="flex-1 bg-black text-white py-5 rounded-[28px] font-black uppercase tracking-widest text-[13px] shadow-2xl hover:bg-gray-800 transition active:scale-95 flex items-center justify-center gap-3">
+                    <Download className="w-5 h-5" /> Download PDF
+                 </button>
+                 <button className="flex-1 bg-white border border-gray-100 text-black py-5 rounded-[28px] font-black uppercase tracking-widest text-[13px] hover:bg-gray-50 transition active:scale-95 shadow-sm">
+                    Print Report
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 }
 
-function StatBox({ label, val, sub }) {
+function ExamStat({ label, val, sub, color }) {
   return (
-    <div className="flex-1 bg-white border border-gray-100 p-4 rounded-2xl text-center shadow-sm">
-      <p className="text-gray-400 font-bold text-[11px] mb-2">{label}</p>
-      <p className="text-gray-900 font-bold text-[18px]">{val} <span className="font-medium text-[14px]">{sub}</span></p>
+    <div className={`bg-white border p-8 rounded-[45px] text-center shadow-lg transition-all duration-300 group hover:-translate-y-2`}>
+      <p className="text-gray-400 font-black text-[9px] mb-4 uppercase tracking-widest">{label}</p>
+      <div className={`font-black text-3xl tracking-tight leading-none tabular-nums text-black group-hover:scale-110 transition-transform`}>
+        {val}<span className="text-gray-300 text-sm ml-1 font-bold">{sub}</span>
+      </div>
     </div>
   );
 }
 
-function Bar({ label, ht }) {
+function SubjectRow({ idx, subject, grade, marks, total }) {
   return (
-    <div className="flex flex-col items-center z-10 relative group cursor-pointer hover:-translate-y-1 transition-transform">
-      <div 
-        className="w-8 bg-[#4f46e5] rounded-[6px] transition-all group-hover:bg-indigo-500"
-        style={{ height: ht }}
-      ></div>
-      <span className="text-gray-400 font-bold text-[10px] mt-2">{label}</span>
+    <div 
+      className="bg-white p-7 rounded-[45px] border border-gray-100 shadow-sm flex items-center hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group animate-in fade-in"
+      style={{ animationDelay: `${idx * 80}ms` }}
+    >
+      <div className="w-16 h-16 rounded-[24px] bg-[#1e1b4b] text-white font-black text-2xl flex items-center justify-center border-4 border-white shadow-xl uppercase">
+        {subject[0]}
+      </div>
+      <div className="ml-8 flex-1">
+         <h4 className="font-black text-black text-2xl tracking-tight leading-tight uppercase group-hover:text-[#4f46e5] transition-colors">{subject}</h4>
+         <div className="flex items-center gap-3 mt-1 text-gray-400 font-bold text-[10px] uppercase">
+            <span>Terminal Exam</span>
+            <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
+            <span className="text-emerald-500">Verified</span>
+         </div>
+      </div>
+      <div className="text-right px-4">
+         <p className="text-black font-black text-2xl tracking-tighter tabular-nums leading-none mb-1">{marks}<span className="text-gray-200 text-xs font-bold">/{total}</span></p>
+         <span className="bg-indigo-50 text-[#4f46e5] px-3 py-1 rounded-xl text-[9px] font-black uppercase border border-indigo-100">Grade {grade}</span>
+      </div>
+      <ChevronRight className="w-8 h-8 text-gray-100 group-hover:text-black transition-colors" />
     </div>
   );
 }
 
-function MarkRow({ init, sub, grade, marks, status }) {
+function TranscriptDetail({ label, val, icon }) {
   return (
-    <div className="p-4 flex items-center hover:bg-gray-50 transition">
-      <div className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm text-[#4f46e5] font-bold text-[16px]">
-        {init}
-      </div>
-      <div className="ml-4 flex-1">
-        <h4 className="font-bold text-gray-900 text-[15px]">{sub}</h4>
-        <p className="text-gray-500 text-[12px] mt-0.5">Grade: {grade}</p>
-      </div>
-      <div className="text-right">
-        <p className="text-gray-900 font-bold text-[15px]">{marks}<span className="text-[12px] font-bold">/100</span></p>
-        <p className="text-[#3e6840] font-bold text-[9px] mt-1 font-mono tracking-tighter opacity-80 uppercase">{status}</p>
-      </div>
+    <div className="flex flex-col items-center text-center group">
+       <div className="bg-gray-50 p-4 rounded-3xl mb-4 group-hover:bg-[#4f46e5] group-hover:text-white transition-all shadow-inner">
+          {React.cloneElement(icon, { className: "w-6 h-6" })}
+       </div>
+       <p className="text-gray-400 font-black text-[9px] uppercase tracking-widest mb-1">{label}</p>
+       <p className="text-black font-black text-[15px] tracking-tight truncate w-full uppercase leading-none">{val}</p>
     </div>
   );
 }

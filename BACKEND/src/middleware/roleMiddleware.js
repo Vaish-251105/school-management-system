@@ -25,3 +25,5 @@ export const checkRoles = (roles) => {
     next();
   };
 };
+
+export const roleProtect = authorizeRoles;

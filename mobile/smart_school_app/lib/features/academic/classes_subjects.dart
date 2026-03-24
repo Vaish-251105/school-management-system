@@ -1,9 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/colors.dart';
+import '../../services/api_service.dart';
 
-class ClassesSubjectsScreen extends StatelessWidget {
+class ClassesSubjectsScreen extends StatefulWidget {
   const ClassesSubjectsScreen({super.key});
+
+  @override
+  State<ClassesSubjectsScreen> createState() => _ClassesSubjectsScreenState();
+}
+
+class _ClassesSubjectsScreenState extends State<ClassesSubjectsScreen> {
+  List<dynamic> classList = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchClasses();
+  }
+
+  Future<void> _fetchClasses() async {
+    final res = await ApiService.getClasses();
+    setState(() {
+      classList = res;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +96,13 @@ class ClassesSubjectsScreen extends StatelessWidget {
                 children: [
                   const Text("Current Classes", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   const SizedBox(height: 16),
-                  _buildClassCard("Grade 10", "Section A", "Room 402", "32", "8", "Dr. Sarah Jenkins", Colors.blue),
-                  _buildClassCard("Grade 11", "Section B", "Lab 02", "28", "6", "Prof. Michael Chen", Colors.orange),
+                  if (isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    ...classList.map((c) {
+                      final title = c is String ? c : (c['name'] ?? "Class");
+                      return _buildClassCard(title, "Section A", "Room 402", "32", "8", "Dr. Sarah Jenkins", Colors.blue);
+                    }),
 
                   const SizedBox(height: 32),
                   const Text("Core Subjects", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
@@ -90,11 +118,35 @@ class ClassesSubjectsScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _showAddClassDialog,
         backgroundColor: AppColors.primary,
         child: const Icon(LucideIcons.plus, color: Colors.white),
       ),
     );
+  }
+
+  void _showAddClassDialog() {
+     final nameController = TextEditingController();
+     showDialog(
+       context: context,
+       builder: (context) => AlertDialog(
+         title: const Text("Create New Class"),
+         content: TextField(controller: nameController, decoration: const InputDecoration(hintText: "e.g. Grade 12-C")),
+         actions: [
+           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+           ElevatedButton(
+             onPressed: () async {
+               if (nameController.text.isNotEmpty) {
+                 await ApiService.createClass({"name": nameController.text});
+                 Navigator.pop(context);
+                 _fetchClasses();
+               }
+             }, 
+             child: const Text("Create")
+           ),
+         ],
+       ),
+     );
   }
 
   Widget _buildTab(String title, bool isActive) {

@@ -19,6 +19,7 @@ class _FeesScreenState extends State<FeesScreen> {
   double _totalCollection = 0;
   double _received = 0;
   double _pending = 0;
+  String _searchQuery = "";
 
   @override
   void initState() {
@@ -94,6 +95,55 @@ class _FeesScreenState extends State<FeesScreen> {
     _loadFees();
   }
 
+  Future<void> _viewReceipt(String id) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 20),
+            Text("Generating Fee Receipt..."),
+          ],
+        ),
+      ),
+    );
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) Navigator.pop(context);
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Digital Receipt"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.checkCircle, color: Colors.green, size: 48),
+              const SizedBox(height: 16),
+              const Text("Fee Payment Successful", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text("Receipt ID: RCPT-${id.substring(id.length - 6).toUpperCase()}"),
+              const Divider(height: 32),
+              const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Date"), Text("24 Mar 2024")]),
+              const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Method"), Text("Online / UPI")]),
+              const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Status"), Text("Settled", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))]),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Receipt saved to storage!"))),
+                icon: const Icon(LucideIcons.download, size: 16),
+                label: const Text("Download PDF"),
+              ),
+            ],
+          ),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+        ),
+      );
+    }
+  }
+
   Future<void> _payNow(String id) async {
     final transactionId = "TXN${DateTime.now().millisecondsSinceEpoch}";
     
@@ -129,6 +179,7 @@ class _FeesScreenState extends State<FeesScreen> {
     final user = context.watch<AuthService>();
     final userRole = user.role.toLowerCase();
     bool canManage = userRole == 'admin' || userRole == 'accountant';
+    bool canPayLocal = userRole == 'student' || userRole == 'parent';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -161,7 +212,7 @@ class _FeesScreenState extends State<FeesScreen> {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Text("\$${_totalCollection.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                            Text("₹${_totalCollection.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
                             const SizedBox(width: 12),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -173,12 +224,38 @@ class _FeesScreenState extends State<FeesScreen> {
                         const SizedBox(height: 24),
                         Row(
                           children: [
-                            Expanded(child: _miniStat("Received", "\$${_received.toStringAsFixed(0)}")),
+                            Expanded(child: _miniStat("Received", "₹${_received.toStringAsFixed(0)}")),
                             Container(width: 1, height: 30, color: Colors.white24),
-                            Expanded(child: _miniStat("Pending", "\$${_pending.toStringAsFixed(0)}")),
+                            Expanded(child: _miniStat("Pending", "₹${_pending.toStringAsFixed(0)}")),
                           ],
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  // SEARCH BAR
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+                      ),
+                      child: TextField(
+                        onChanged: (val) {
+                          setState(() {
+                            _searchQuery = val;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(LucideIcons.search, size: 20, color: Colors.grey),
+                          hintText: "Search students or fees...",
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 15),
+                        ),
+                      ),
                     ),
                   ),
 
@@ -201,9 +278,18 @@ class _FeesScreenState extends State<FeesScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(24),
-                    itemCount: _fees.length,
+                    itemCount: _fees.where((f) {
+                      final title = (f['title'] ?? f['type'] ?? "").toString().toLowerCase();
+                      final student = (f['studentId']?['name'] ?? "").toString().toLowerCase();
+                      return title.contains(_searchQuery.toLowerCase()) || student.contains(_searchQuery.toLowerCase());
+                    }).length,
                     itemBuilder: (context, index) {
-                      final f = _fees[index];
+                      final filtered = _fees.where((f) {
+                        final title = (f['title'] ?? f['type'] ?? "").toString().toLowerCase();
+                        final student = (f['studentId']?['name'] ?? "").toString().toLowerCase();
+                        return title.contains(_searchQuery.toLowerCase()) || student.contains(_searchQuery.toLowerCase());
+                      }).toList();
+                      final f = filtered[index];
                       // Determine status
                       String rawStatus = (f['status'] ?? f['paid'] == true ? 'paid' : 'pending').toString().toLowerCase();
                       
@@ -213,10 +299,10 @@ class _FeesScreenState extends State<FeesScreen> {
                         f['title'] ?? (f['type'] != null ? "${f['type']} Fee" : "School Fee"), 
                         f['studentId']?['name'] ?? "Assigned Student", 
                         f['dueDate']?.toString().split('T')[0] ?? "--", 
-                        "\$${f['amount'] ?? 0}", 
+                        "₹${f['amount'] ?? 0}", 
                         rawStatus == "paid" ? "Paid" : "Pending",
                         canManage,
-                        userRole == 'student' || userRole == 'parent'
+                        canPayLocal
                       );
                     },
                   ),
@@ -299,6 +385,18 @@ class _FeesScreenState extends State<FeesScreen> {
                       child: _actionButton(context, LucideIcons.banknote, "Pay Now", Colors.green.withOpacity(0.1), Colors.green),
                     )
                   ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _viewReceipt(id),
+                    child: _actionButton(context, LucideIcons.fileText, "Download Receipt", Colors.indigo.withOpacity(0.1), Colors.indigo),
+                  ),
+                ),
               ],
             ),
           ]

@@ -57,49 +57,54 @@ class _CommunicationScreenState extends State<CommunicationScreen> with SingleTi
     }
   }
 
-  void _showComposeDialog() {
+  void _showComposeDialog() async {
     final subjectController = TextEditingController();
     final messageController = TextEditingController();
     String? selectedRecipient;
+    List<dynamic> recipients = await ApiService.getRecipients();
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("New Message"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                value: selectedRecipient,
-                decoration: const InputDecoration(labelText: "Send to", border: OutlineInputBorder()),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text("Select recipient")),
-                  const DropdownMenuItem(value: "teacher1", child: Text("Dr. Sarah Jenkins")),
-                  const DropdownMenuItem(value: "teacher2", child: Text("Prof. Michael Chen")),
-                  const DropdownMenuItem(value: "principal", child: Text("Principal")),
-                ].toList(),
-                onChanged: (value) => selectedRecipient = value,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: subjectController,
-                decoration: const InputDecoration(labelText: "Subject", border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: messageController,
-                maxLines: 4,
-                decoration: const InputDecoration(labelText: "Message", border: OutlineInputBorder()),
-              ),
-            ],
+        content: StatefulBuilder(
+          builder: (context, setDialogState) => SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String?>(
+                  value: selectedRecipient,
+                  decoration: const InputDecoration(labelText: "Send to", border: OutlineInputBorder()),
+                  items: [
+                    ...recipients.map((r) => DropdownMenuItem<String?>(
+                          value: r['_id'].toString(),
+                          child: Text("${r['name']} (${r['role']})"),
+                        )),
+                  ],
+                  onChanged: (value) => setDialogState(() => selectedRecipient = value),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: subjectController,
+                  decoration: const InputDecoration(labelText: "Subject", border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: messageController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(labelText: "Message", border: OutlineInputBorder()),
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () async {
-              if (subjectController.text.isEmpty || messageController.text.isEmpty) {
+              if (selectedRecipient == null || subjectController.text.isEmpty || messageController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Please fill all fields"), backgroundColor: Colors.orange),
                 );
@@ -107,8 +112,8 @@ class _CommunicationScreenState extends State<CommunicationScreen> with SingleTi
               }
 
               try {
-                await ApiService.sendMessage(selectedRecipient ?? "", subjectController.text, messageController.text);
-                Navigator.pop(context);
+                await ApiService.sendMessage(selectedRecipient!, subjectController.text, messageController.text);
+                if (context.mounted) Navigator.pop(context);
                 _loadMessages();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Message sent successfully!"), backgroundColor: Colors.green),

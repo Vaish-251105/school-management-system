@@ -7,7 +7,11 @@ import {
   ClipboardList,
   ChevronRight,
   Plus,
-  Loader2
+  Loader2,
+  Settings,
+  MoreVertical,
+  Activity,
+  ArrowUpRight
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
@@ -21,15 +25,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const [statsRes, staffRes] = await Promise.all([
           api.get("/dashboard/stats"),
           api.get("/teachers")
         ]);
-        
         setStats(statsRes.data);
-        setStaff(Array.isArray(staffRes.data) ? staffRes.data.slice(0, 3) : []);
+        setStaff(Array.isArray(staffRes.data) ? staffRes.data.slice(0, 4) : []);
       } catch (err) {
-        console.error("Admin dashboard fetch error:", err);
+        console.error("Admin error:", err);
       } finally {
         setLoading(false);
       }
@@ -38,90 +42,89 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="bg-[#fafafa] min-h-screen font-sans flex flex-col pb-28 text-gray-900">
+    <div className="bg-[#fafafa] min-h-screen pb-32 font-sans animate-in fade-in transition-all">
       
       {/* HEADER AREA */}
-      <div className="relative mb-12">
-        <div className="bg-gradient-to-br from-[#4338ca] to-[#4f46e5] px-6 pt-12 pb-24 rounded-b-[40px] shadow-lg shrink-0 overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-          
-          <div className="max-w-4xl mx-auto relative z-10 flex justify-between items-center text-gray-900">
-            <div>
-              <p className="text-white/80 text-[12px] font-bold tracking-wide uppercase">Smart School ERP</p>
-              <h1 className="text-white text-[26px] font-bold leading-tight mt-1">Admin Dashboard</h1>
-            </div>
-            <button className="bg-white/10 p-2.5 rounded-xl border border-white/20 hover:bg-white/20 transition group">
-              <Bell className="w-5 h-5 text-white fill-white/10 group-hover:scale-110" />
-            </button>
+      <div className="bg-[#1e1b4b] px-6 pt-12 pb-24 rounded-b-[60px] shadow-2xl relative overflow-hidden shrink-0">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center text-white text-center md:text-left">
+          <div className="animate-in slide-in-from-bottom duration-700">
+            <p className="text-white/40 text-[10px] font-black uppercase tracking-[3px] mb-2 px-1">School ERP</p>
+            <h1 className="text-white text-[32px] font-black leading-tight uppercase tracking-tight">Admin Dashboard</h1>
+            <p className="text-white/80 text-sm mt-1 font-medium">System Administrator Hub</p>
           </div>
-        </div>
-
-        {/* OVERLAPPING STAT CARDS */}
-        <div className="max-w-4xl mx-auto px-6 absolute bottom-0 left-0 w-full translate-y-1/2 flex gap-4">
-          <div className="flex-1 bg-white p-5 rounded-3xl shadow-[0_10px_20px_rgba(0,0,0,0.05)] border border-gray-50">
-            <p className="text-gray-400 font-bold text-[11px] mb-2 uppercase tracking-wide">Total Students</p>
-            <div className="flex items-end gap-3">
-              <h2 className="text-gray-900 text-[26px] font-bold leading-none">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin text-indigo-500" /> : (stats?.totalStudents || "0")}
-              </h2>
-              <span className="bg-green-50 text-green-600 font-bold text-[10px] px-2 py-0.5 rounded-md mb-1">+RealTime</span>
-            </div>
-          </div>
-          <div className="flex-1 bg-white p-5 rounded-3xl shadow-[0_10px_20px_rgba(0,0,0,0.05)] border border-gray-50">
-            <p className="text-gray-400 font-bold text-[11px] mb-2 uppercase tracking-wide">Daily Attendance</p>
-            <div className="flex items-end gap-3">
-              <h2 className="text-gray-900 text-[26px] font-bold leading-none">
-                 {loading ? <Loader2 className="w-6 h-6 animate-spin text-indigo-500" /> : (stats?.attendancePercentage || "0") + "%"}
-              </h2>
-              <span className="bg-blue-50 text-blue-600 font-bold text-[10px] px-2 py-0.5 rounded-md mb-1">Today</span>
-            </div>
+          <div className="flex gap-4 mt-6 md:mt-0">
+             <button className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition group shadow-2xl backdrop-blur-md">
+               <Bell className="w-7 h-7 text-white" />
+             </button>
+             <button className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition group shadow-2xl backdrop-blur-md">
+               <Settings className="w-7 h-7 text-white" />
+             </button>
           </div>
         </div>
       </div>
 
-      {/* BODY CONTENT */}
-      <div className="max-w-4xl mx-auto px-6 mt-4 w-full flex-1">
-        
-        {/* ACADEMIC MANAGEMENT GRID */}
-        <h3 className="text-gray-900 font-bold text-[18px] mb-4">Academic Management</h3>
-        
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <GridBox onClick={() => navigate('/staff')} icon={<Users />} title="Staff & Teachers" sub={`${staff.length}+ Members`} />
-          <GridBox onClick={() => navigate('/classes')} icon={<BookOpen />} title="Classes" sub="Manage Grades" />
-          <GridBox onClick={() => alert('Detailed Analytics coming soon!')} icon={<BarChart2 />} title="Analytics" sub="Performance" />
-          <GridBox onClick={() => navigate('/homework-notices')} icon={<ClipboardList />} title="Notices" sub="Announcements" />
+      <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-50">
+        {/* STATS GRID */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+           <AdminStatCard label="STUDENTS" val={stats?.totalStudents || "..."} status="TOTAL" color="indigo" />
+           <AdminStatCard label="STAFF" val={staff.length || "..."} status="ACTIVE" color="emerald" />
+           <AdminStatCard label="ATTENDANCE" val={(stats?.attendancePercentage || "0") + "%"} status="TODAY" color="blue" />
+           <AdminStatCard label="FEES" val="94%" status="PAID" color="rose" />
         </div>
 
-        {/* RECENTLY ADDED STAFF */}
-        <div className="flex justify-between items-end mb-4">
-          <h3 className="text-gray-900 font-bold text-[18px]">Recently Added Staff</h3>
-          <button onClick={() => navigate('/staff')} className="text-[#4f46e5] font-medium text-[13px] hover:underline transition">View All</button>
+        {/* OPERATIONS SECTION */}
+        <div className="flex justify-between items-center mb-8 px-2">
+          <h3 className="text-black font-black text-2xl tracking-tight uppercase">Management Hub</h3>
+          <div className="bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-2">
+             <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+             <span className="text-emerald-700 text-[10px] font-black uppercase tracking-widest">Live</span>
+          </div>
         </div>
 
-        <div className="space-y-3 mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <BoxLink onClick={() => navigate('/staff')} icon={<Users />} title="Staff List" color="bg-indigo-50 text-indigo-500" />
+          <BoxLink onClick={() => navigate('/staff-attendance')} icon={<ClipboardList />} title="Attendance" color="bg-emerald-50 text-emerald-500" />
+          <BoxLink onClick={() => navigate('/classes')} icon={<BookOpen />} title="Classes" color="bg-orange-50 text-orange-500" />
+          <BoxLink onClick={() => navigate('/reports')} icon={<BarChart2 />} title="Reports" color="bg-rose-50 text-rose-500" />
+        </div>
+
+        {/* ACTIVITY LIST */}
+        <div className="flex justify-between items-end mb-8 px-2">
+           <div>
+              <h3 className="text-black font-black text-2xl tracking-tight uppercase">Recent Staff</h3>
+              <p className="text-gray-400 font-bold text-xs mt-1 uppercase">Recently added members</p>
+           </div>
+           <button onClick={() => navigate('/staff')} className="text-[#4f46e5] font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-50 px-4 py-2 rounded-xl transition">
+              View All <ArrowUpRight className="w-4 h-4" />
+           </button>
+        </div>
+
+        <div className="bg-white border border-gray-100 rounded-[40px] shadow-sm overflow-hidden mb-12 text-black">
           {loading ? (
-            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-indigo-500" /></div>
+             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-indigo-500 w-10 h-10" /></div>
           ) : staff.length === 0 ? (
-            <div className="text-center py-5 text-gray-400 text-sm">No staff records found.</div>
+             <div className="p-20 text-center text-gray-400 font-bold italic">No records found.</div>
           ) : (
-            staff.map((s) => (
-              <StaffRow 
-                key={s._id}
-                init={s.userId?.name?.split(' ').map(n=>n[0]).join('') || "TS"} 
-                name={s.userId?.name || "Staff Member"} 
-                sub={`${s.designation || "Staff"} • ${s.department || "Academic"}`} 
-              />
-            ))
+             staff.map((s, idx) => (
+               <StaffRow 
+                 key={s._id || idx}
+                 idx={idx}
+                 init={s.userId?.name?.split(' ').map(n=>n[0]).join('') || "TS"} 
+                 name={s.userId?.name || "Member"} 
+                 sub={`${s.designation || "Staff"} • ${s.department || "Academic"}`} 
+               />
+             ))
           )}
         </div>
 
       </div>
 
-      <div className="fixed bottom-6 right-6">
+      <div className="fixed bottom-10 right-10 z-[100]">
         <button 
-          onClick={() => alert('Opening Add Staff Form... (Redirecting to User Creation)') || navigate('/signup')}
-          className="bg-[#4f46e5] text-white px-6 py-3.5 rounded-full font-bold shadow-lg shadow-indigo-500/30 flex items-center gap-2 transition hover:scale-105 active:scale-95">
-          <Plus className="w-5 h-5" /> Add Staff
+          onClick={() => navigate('/signup')}
+          className="bg-black text-white px-8 py-5 rounded-[28px] font-black shadow-3xl shadow-indigo-500/10 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all text-[15px] uppercase tracking-widest border border-white/10 group">
+          <Plus className="w-6 h-6 text-emerald-400" /> Add Staff
         </button>
       </div>
 
@@ -129,45 +132,61 @@ export default function AdminDashboard() {
   );
 }
 
-function GridBox({ icon, title, sub, onClick }) {
+function AdminStatCard({ label, val, status, color }) {
+  const themes = {
+    indigo: "text-indigo-600 bg-indigo-50",
+    emerald: "text-emerald-600 bg-emerald-50",
+    blue: "text-blue-600 bg-blue-50",
+    rose: "text-rose-600 bg-rose-50"
+  };
+  return (
+    <div className="bg-white p-7 rounded-[35px] shadow-sm border border-gray-100 flex flex-col items-center hover:shadow-2xl hover:-translate-y-1 transition-all">
+       <p className="text-gray-400 font-black text-[9px] uppercase tracking-[3px] mb-3">{label}</p>
+       <h4 className="text-black text-3xl font-black leading-none tracking-tight">{val}</h4>
+       <div className={`mt-4 px-4 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest ${themes[color]}`}>
+          {status}
+       </div>
+    </div>
+  );
+}
+
+function BoxLink({ icon, title, color, onClick }) {
   return (
     <div 
       onClick={onClick}
-      className="bg-[#f9fafb] border border-gray-100 p-5 rounded-2xl flex flex-col items-center text-center hover:shadow-md transition cursor-pointer hover:bg-white"
+      className="group cursor-pointer p-8 rounded-[40px] border border-gray-100 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all bg-white"
     >
-      <div className="w-12 h-12 bg-[#4f46e5] rounded-full flex items-center justify-center text-white mb-3 shadow-md">
-        {React.cloneElement(icon, { className: "w-6 h-6" })}
+      <div className={`${color} p-5 rounded-3xl mb-5 group-hover:scale-110 transition-transform shadow-sm`}>
+        {React.cloneElement(icon, { className: "w-8 h-8" })}
       </div>
-      <h4 className="font-bold text-gray-900 text-[15px]">{title}</h4>
-      <p className="text-gray-400 text-[11px] mt-0.5">{sub}</p>
+      <h4 className="text-black font-black text-[15px] tracking-tight uppercase leading-tight">{title}</h4>
+      <div className="mt-4 flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 group-hover:bg-black group-hover:text-white transition-all shadow-sm">
+         <ChevronRight className="w-4 h-4" />
+      </div>
     </div>
   );
 }
 
-function Bar({ label, ht }) {
+function StaffRow({ init, name, sub, idx }) {
   return (
-    <div className="flex flex-col items-center">
-      {ht !== "0%" ? (
-        <div className="w-7 bg-[#4f46e5] rounded-md transition-all hover:bg-indigo-500" style={{ height: ht }}></div>
-      ) : (
-        <div className="w-7 h-0 border-t-2 border-dashed border-gray-200"></div>
-      )}
-      <span className="text-gray-400 font-bold text-[10px] mt-3">{label}</span>
-    </div>
-  );
-}
-
-function StaffRow({ init, name, sub }) {
-  return (
-    <div className="bg-white p-4 rounded-2xl flex items-center border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer group">
-      <div className="w-11 h-11 bg-indigo-50 text-[#4f46e5] rounded-full flex items-center justify-center font-bold text-[15px] shrink-0 border border-indigo-100">
+    <div 
+      className="p-6 flex items-center border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-all cursor-pointer group"
+    >
+      <div className="w-14 h-14 bg-[#1e1b4b] text-white rounded-[20px] flex items-center justify-center font-black text-[17px] shrink-0 border border-white/10 group-hover:scale-110 transition shadow-lg">
         {init}
       </div>
-      <div className="ml-4 flex-1">
-        <h4 className="font-bold text-gray-900 text-[15px]">{name}</h4>
-        <p className="text-gray-400 text-[12px]">{sub}</p>
+      <div className="ml-6 flex-1 text-black">
+        <h4 className="font-black text-[18px] tracking-tight leading-tight group-hover:text-[#4f46e5] transition-colors uppercase">{name}</h4>
+        <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest mt-1 italic">{sub}</p>
       </div>
-      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
+      <div className="flex gap-2">
+         <button className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600 hover:bg-[#4f46e5] hover:text-white transition">
+            <Activity className="w-5 h-5" />
+         </button>
+         <button className="bg-gray-50 p-2.5 rounded-xl text-gray-400 hover:bg-black hover:text-white transition">
+            <MoreVertical className="w-5 h-5" />
+         </button>
+      </div>
     </div>
   );
 }

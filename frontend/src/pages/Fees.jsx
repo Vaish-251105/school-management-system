@@ -10,17 +10,21 @@ import {
   Banknote,
   BarChart,
   ArrowRight,
-  Plus
+  Plus,
+  Loader2
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 
 export default function Fees() {
+  const navigate = useNavigate();
   const [fees, setFees] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFees = async () => {
       try {
+        setLoading(true);
         const response = await api.get("/fees");
         setFees(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
@@ -50,98 +54,104 @@ export default function Fees() {
   const totalReceived = fees.filter(f => f.paid).reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const totalPending = fees.filter(f => !f.paid).reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
-  return (
-    <div className="bg-[#fafafa] min-h-screen font-sans flex flex-col pb-28">
-      {/* HEADER AREA */}
-      <div className="bg-[#4f46e5] px-6 pt-12 pb-8 rounded-b-[40px] shadow-lg shrink-0">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <button onClick={() => window.history.back()} className="text-white hover:bg-white/10 p-2 rounded-full transition">
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-white text-lg font-bold">Fees & Payments</h1>
-            <button onClick={() => alert("Settings for Fees module coming soon")} className="text-white p-2 hover:bg-white/10 rounded-full transition">
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          </div>
+  if (loading) return (
+     <div className="flex flex-col items-center justify-center min-h-screen bg-[#fafafa]">
+       <Loader2 className="w-12 h-12 animate-spin text-[#4f46e5] mb-6" />
+       <p className="text-gray-400 font-black italic tracking-widest uppercase">Syncing Records...</p>
+     </div>
+  );
 
-          <div className="border border-white/20 bg-white/10 rounded-3xl p-6">
-            <div className="flex justify-between items-start">
+  return (
+    <div className="bg-[#fafafa] min-h-screen font-sans flex flex-col pb-32 transition-all animate-in fade-in">
+      
+      {/* HEADER AREA */}
+      <div className="bg-[#1e1b4b] px-6 pt-12 pb-12 rounded-b-[60px] shadow-2xl relative overflow-hidden shrink-0">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-5xl mx-auto relative z-10 text-white">
+          <div className="flex justify-between items-center mb-10 text-center md:text-left">
+            <div className="flex gap-4 items-center">
+              <button 
+                onClick={() => navigate(-1)} 
+                className="bg-white/10 p-3.5 rounded-[22px] border border-white/5 hover:bg-white/20 transition shadow-2xl backdrop-blur-md active:scale-95 group">
+                <ChevronLeft className="w-7 h-7 text-white" />
+              </button>
               <div>
-                <p className="text-white/80 text-[12px]">Total Collection</p>
-                <h2 className="text-white text-[28px] font-bold tracking-tight">${(totalReceived + totalPending).toFixed(2)}</h2>
-              </div>
-              <div className="bg-white/20 rounded-full px-3 py-1.5 flex items-center gap-1.5">
-                <TrendingUp className="text-white w-3 h-3" />
-                <span className="text-white font-bold text-[11px]">+12.5%</span>
+                <p className="text-white/40 text-[10px] font-black uppercase tracking-[3px] mb-1">Financial Ledger</p>
+                <h1 className="text-white text-[32px] font-black leading-tight uppercase tracking-tight">Finance</h1>
               </div>
             </div>
-            <hr className="border-white/20 my-4" />
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-white/80 text-[11px]">Received</p>
-                <h3 className="text-white text-[16px] font-bold">${totalReceived.toFixed(2)}</h3>
-              </div>
-              <div className="w-px h-8 bg-white/20"></div>
-              <div>
-                <p className="text-white/80 text-[11px]">Pending</p>
-                <h3 className="text-white text-[16px] font-bold">${totalPending.toFixed(2)}</h3>
-              </div>
+            <div className="hidden md:flex gap-4">
+               <button className="bg-white/10 p-4 rounded-3xl border border-white/5 hover:bg-white/20 transition group shadow-2xl backdrop-blur-md text-white">
+                 <Bell className="w-7 h-7" />
+               </button>
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-[40px] p-10 shadow-inner grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-[20px] mb-2">Total Collection</p>
+              <h2 className="text-white text-[32px] font-black tracking-tight leading-none uppercase">₹{(totalReceived + totalPending).toLocaleString('en-IN')}</h2>
+            </div>
+            <div className="border-l border-white/10 pl-8">
+              <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-1">Received</p>
+              <h3 className="text-white text-2xl font-black tracking-tight leading-none tabular-nums">₹{totalReceived.toLocaleString('en-IN')}</h3>
+            </div>
+            <div className="border-l border-white/10 pl-8">
+              <p className="text-rose-400 text-[10px] font-black uppercase tracking-widest mb-1">Pending</p>
+              <h3 className="text-white text-2xl font-black tracking-tight leading-none tabular-nums">₹{totalPending.toLocaleString('en-IN')}</h3>
             </div>
           </div>
         </div>
       </div>
 
-      {/* BODY CONTENT */}
-      <div className="max-w-4xl mx-auto px-6 mt-6 w-full flex-1">
-        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-          <button className="bg-[#4f46e5] border border-[#4f46e5] text-white font-bold px-4 py-2 rounded-full text-[13px] shrink-0 shadow-sm flex items-center gap-1.5">
-            <Check className="w-4 h-4" /> All Fees
-          </button>
+      <div className="max-w-5xl mx-auto px-8 mt-12 w-full flex-1 text-black font-sans">
+        
+        <div className="flex justify-between items-end mb-8 px-2">
+           <h3 className="text-black font-black text-2xl tracking-tight uppercase leading-none">Transactions</h3>
+           <div className="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-2">
+             <div className="w-2.5 h-2.5 bg-[#4f46e5] rounded-full animate-pulse"></div>
+             <span className="text-[#4f46e5] text-[10px] font-black uppercase tracking-widest leading-none">Synced</span>
+           </div>
         </div>
 
-        <div className="flex justify-between items-end mb-4">
-          <h3 className="text-gray-900 font-bold text-[18px]">Recent Transactions</h3>
-        </div>
-
-        <div className="space-y-4 mb-4">
-          {loading ? (
-            <p className="text-center py-10">Loading transactions...</p>
-          ) : fees.length > 0 ? (
-            fees.map((f) => (
+        <div className="grid gap-8 mb-16">
+          {fees.length > 0 ? (
+            fees.map((f, idx) => (
               <FeeCard 
-                key={f._id} id={f._id} title={`${f.type} Fee`} subtitle={`Student ID: ${f.studentId}`}
-                date={new Date(f.dueDate).toLocaleDateString()} amount={`$${f.amount.toFixed(2)}`}
+                key={f._id || idx} idx={idx} id={f._id} title={`${f.type} Fee`} subtitle={`Student ID: ${f.studentId}`}
+                date={new Date(f.dueDate).toLocaleDateString()} amount={`₹${f.amount.toLocaleString('en-IN')}`}
                 status={f.paid ? "Paid" : "Pending"} hasPay={!f.paid} onPay={handlePay}
               />
             ))
           ) : (
-            <div className="p-8 text-center text-gray-500 italic">No fee records found</div>
+            <div className="p-32 text-center bg-gray-50 border-4 border-dashed border-gray-100 rounded-[50px] flex flex-col items-center">
+               <Banknote className="w-16 h-16 text-gray-200 mb-6" />
+               <p className="text-gray-400 font-black italic uppercase text-lg">No records found</p>
+            </div>
           )}
         </div>
 
-
-        {/* FINANCIAL INSIGHTS */}
-        <div className="mt-8 bg-indigo-50/50 border border-indigo-100/50 p-4 rounded-3xl shadow-sm flex items-center mb-6">
-          <div className="w-10 h-10 bg-[#4f46e5] rounded-xl flex items-center justify-center shadow-md">
-            <BarChart className="text-white w-5 h-5" />
-          </div>
-          <div className="ml-4 flex-1">
-            <h4 className="text-gray-900 font-bold text-[15px]">Financial Insights</h4>
-            <p className="text-gray-500 text-[12px] mt-0.5">Your monthly revenue report is ready.</p>
-          </div>
-          <div className="w-8 h-8 bg-white rounded-full shadow-sm flex items-center justify-center text-[#4f46e5]">
-            <ArrowRight className="w-4 h-4" />
-          </div>
+        {/* FINANCIAL SUMMARY */}
+        <div className="bg-black p-10 rounded-[50px] shadow-3xl relative overflow-hidden group">
+           <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-125 transition-transform duration-700">
+             <BarChart className="w-32 h-32 text-emerald-400" />
+           </div>
+           <h4 className="text-white text-2xl font-black tracking-tight uppercase mb-4 relative z-10">Financial Summary</h4>
+           <p className="text-white/40 font-bold text-sm leading-relaxed mb-10 relative z-10 w-full max-w-lg">Your monthly institution financial report is generated in real-time. Review pending collections and audit logs for the current session.</p>
+           <button 
+             onClick={() => alert("Redirecting to audit reports...")}
+             className="bg-emerald-500 text-white px-10 py-5 rounded-[30px] font-black text-sm uppercase tracking-widest shadow-2xl hover:bg-emerald-600 transition active:scale-95 flex items-center gap-4 relative z-10">
+              <Download className="w-6 h-6 text-emerald-900/50" /> View Audit Report
+           </button>
         </div>
 
       </div>
 
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-10 right-10 z-[100]">
         <button 
           onClick={() => alert("Opening Fee Collection Form...")}
-          className="bg-[#4f46e5] text-white px-6 py-3.5 rounded-full font-bold shadow-lg shadow-indigo-500/30 flex items-center gap-2 hover:bg-indigo-600 transition">
-          <Plus className="w-5 h-5" /> Collect Fee
+          className="bg-[#4f46e5] text-white px-10 py-5 rounded-[30px] font-black shadow-3xl shadow-indigo-500/20 flex items-center gap-4 hover:scale-110 active:scale-95 transition-all text-[15px] uppercase tracking-widest border border-white/10">
+          <Plus className="w-7 h-7 text-indigo-300" /> Collect Fee
         </button>
       </div>
 
@@ -149,64 +159,53 @@ export default function Fees() {
   );
 }
 
-function FeeCard({ id, title, subtitle, date, amount, status, hasPay, onPay }) {
+function FeeCard({ idx, id, title, subtitle, date, amount, status, hasPay, onPay }) {
   
-  let badgeClasses = "bg-transparent text-gray-800";
-  if (status === "Paid") badgeClasses = "bg-green-50 text-green-700";
-  if (status === "Pending") badgeClasses = "text-gray-800"; // looks regular text in design
+  const isPaid = status === "Paid";
 
   return (
-    <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition">
+    <div 
+      className="bg-white p-8 rounded-[45px] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group animate-in slide-in-from-bottom"
+      style={{ animationDelay: `${idx * 100}ms` }}
+    >
       
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start mb-6 text-black">
         <div>
-          <h4 className="font-bold text-gray-900 text-[16px] leading-tight">{title}</h4>
-          <p className="text-gray-400 text-[12px] mt-1">{subtitle}</p>
+           <div className="bg-indigo-50 text-indigo-600 font-black text-[10px] uppercase tracking-[2px] px-3 py-1 rounded-xl w-fit mb-4">Official Receipt</div>
+           <h4 className="font-black text-black text-2xl tracking-tight leading-tight uppercase group-hover:text-[#4f46e5] transition-colors">{title}</h4>
+           <p className="text-gray-400 text-xs font-black uppercase mt-1 italic">{subtitle}</p>
         </div>
-        <div className={`${badgeClasses} font-bold text-[10px] px-2.5 py-1 rounded-full`}>
+        <div className={`font-black text-[11px] px-5 py-2 rounded-2xl uppercase tracking-widest border-2 ${
+          isPaid ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
+        }`}>
           {status}
         </div>
       </div>
 
-      <hr className="border-gray-100 mb-4" />
-
-      <div className="flex justify-between items-center mb-5">
+      <div className="grid grid-cols-2 gap-8 mb-10 py-8 border-y border-gray-50 text-black">
         <div>
-          <p className="text-gray-400 text-[11px]">Due Date</p>
-          <p className="text-gray-800 text-[15px] font-medium mt-0.5">{date}</p>
+           <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Payment Deadline</p>
+           <p className="text-black font-black text-xl tabular-nums italic uppercase">{date}</p>
         </div>
         <div className="text-right">
-          <p className="text-gray-400 text-[11px]">Amount</p>
-          <p className="text-[#4f46e5] text-[18px] font-bold tracking-tight">{amount}</p>
+           <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Total Fee Amount</p>
+           <p className="text-[#4f46e5] text-3xl font-black tracking-tight leading-none uppercase">{amount}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <button 
-          onClick={() => alert("Reminder sent to registered parent/guardian.")}
-          className="bg-indigo-50 text-[#4f46e5] py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 hover:bg-indigo-100 transition">
-          <Bell className="w-3.5 h-3.5" /> Send Reminder
-        </button>
-        <button 
-          onClick={() => onPay(id)}
-          className="bg-[#4f46e5] text-white py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-indigo-600 transition">
-          <CheckCircle2 className="w-3.5 h-3.5" /> Mark Paid
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <button 
-          onClick={() => alert("Generating digital receipt...")}
-          className="bg-white border text-gray-500 border-gray-200 py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition">
-          <Download className="w-3.5 h-3.5" /> Receipt
-        </button>
+      <div className="flex gap-4">
         {hasPay && (
           <button 
             onClick={() => onPay(id)}
-            className="bg-[#2d5a27] text-white py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-green-900 transition">
-            <Banknote className="w-3.5 h-3.5" /> Pay Now
+            className="flex-1 bg-black text-white py-5 rounded-[28px] font-black text-xs uppercase tracking-widest hover:bg-gray-800 transition active:scale-95 shadow-xl flex items-center justify-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Mark As Paid
           </button>
         )}
+        <button 
+          onClick={() => alert("Digital receipt generated.")}
+          className="flex-1 bg-white border border-gray-100 text-black py-5 rounded-[28px] font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition active:scale-95 shadow-sm flex items-center justify-center gap-3">
+          <Download className="w-5 h-5 text-indigo-500" /> Digital Receipt
+        </button>
       </div>
 
     </div>

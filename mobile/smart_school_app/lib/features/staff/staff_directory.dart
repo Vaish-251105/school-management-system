@@ -14,6 +14,9 @@ class StaffDirectoryScreen extends StatefulWidget {
 class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
   List<dynamic> staffList = [];
   bool isLoading = true;
+  List<dynamic> filteredStaff = [];
+  String searchQuery = "";
+  String activeFilter = "All Staff";
 
   @override
   void initState() {
@@ -23,16 +26,39 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
 
   Future<void> _fetchStaff() async {
     try {
-      final res = await ApiService.getTeachers();
+      final res = await ApiService.getStaff();
       if (mounted) {
         setState(() {
           staffList = res;
+          _applyFilters();
           isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) setState(() => isLoading = false);
     }
+  }
+
+  void _applyFilters() {
+    setState(() {
+      filteredStaff = staffList.where((s) {
+        final userData = s['userId'] ?? s;
+        final name = (userData['name'] ?? "").toString().toLowerCase();
+        final role = (userData['role'] ?? "").toString().toLowerCase();
+        final email = (userData['email'] ?? "").toString().toLowerCase();
+        
+        bool matchesSearch = name.contains(searchQuery.toLowerCase()) || 
+                           role.contains(searchQuery.toLowerCase()) ||
+                           email.contains(searchQuery.toLowerCase());
+        
+        bool matchesFilter = activeFilter == "All Staff" || 
+                           (activeFilter == "Teachers" && role == "teacher") ||
+                           (activeFilter == "Accountants" && role == "accountant") ||
+                           (activeFilter == "Admin" && role == "admin");
+        
+        return matchesSearch && matchesFilter;
+      }).toList();
+    });
   }
 
   @override
@@ -85,9 +111,13 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withOpacity(0.1)),
                   ),
-                  child: const TextField(
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
+                  child: TextField(
+                    onChanged: (val) {
+                      searchQuery = val;
+                      _applyFilters();
+                    },
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
                       hintText: "Search staff, departments...",
                       hintStyle: TextStyle(color: Colors.white70, fontSize: 14),
                       prefixIcon: Icon(LucideIcons.search, color: Colors.white70),
@@ -108,10 +138,10 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                _buildFilterChip(context, "All Staff", true),
-                _buildFilterChip(context, "Teachers", false),
-                _buildFilterChip(context, "Admin", false),
-                _buildFilterChip(context, "Accountants", false),
+                _buildFilterChip(context, "All Staff", activeFilter == "All Staff"),
+                _buildFilterChip(context, "Teachers", activeFilter == "Teachers"),
+                _buildFilterChip(context, "Admin", activeFilter == "Admin"),
+                _buildFilterChip(context, "Accountants", activeFilter == "Accountants"),
               ],
             ),
           ),
@@ -122,25 +152,30 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
           Expanded(
             child: isLoading 
               ? const Center(child: CircularProgressIndicator())
-              : staffList.isEmpty 
+              : filteredStaff.isEmpty 
                 ? const Center(child: Text("No staff found"))
                 : RefreshIndicator(
                     onRefresh: _fetchStaff,
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      itemCount: staffList.length,
+                      itemCount: filteredStaff.length,
                       itemBuilder: (context, index) {
-                        final staff = staffList[index];
-                        final user = staff['userId'] ?? {};
+                        final staff = filteredStaff[index];
+                        final isTeacher = staff['userId'] != null;
+                        final userData = isTeacher ? staff['userId'] : staff;
+                        final name = userData['name'] ?? 'Unknown Staff';
+                        final role = userData['role']?.toString().toUpperCase() ?? 'STAFF';
+                        final detail = isTeacher ? (staff['subject'] ?? 'Teacher') : role;
+                        
                         return GestureDetector(
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffProfileScreen())),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StaffProfileScreen(staff: staff))),
                           child: _buildStaffCard(
                             context,
-                            "https://ui-avatars.com/api/?name=${user['name'] ?? 'Staff'}&background=random",
-                            user['name'] ?? 'Unknown Staff',
-                            user['role']?.toString().toUpperCase() ?? 'STAFF',
-                            staff['subject'] ?? 'Department',
-                            LucideIcons.user,
+                            "https://ui-avatars.com/api/?name=$name&background=random",
+                            name,
+                            role,
+                            detail,
+                            isTeacher ? LucideIcons.book : LucideIcons.userCheck,
                             true,
                           ),
                         );
@@ -151,10 +186,66 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: _showAddStaffDialog,
         backgroundColor: theme.primaryColor,
         icon: const Icon(LucideIcons.plus, color: Colors.white),
         label: const Text("Add Staff", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  void _showAddStaffDialog() {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    String selectedRole = "teacher";
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Add New Staff"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameController, decoration: const InputDecoration(labelText: "Full Name")),
+                TextField(controller: emailController, decoration: const InputDecoration(labelText: "Email")),
+                TextField(controller: passwordController, decoration: const InputDecoration(labelText: "Password"), obscureText: true),
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  items: const [
+                    DropdownMenuItem(value: "teacher", child: Text("Teacher")),
+                    DropdownMenuItem(value: "accountant", child: Text("Accountant")),
+                    DropdownMenuItem(value: "admin", child: Text("Admin")),
+                  ],
+                  onChanged: (val) => setDialogState(() => selectedRole = val!),
+                  decoration: const InputDecoration(labelText: "Role"),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () async {
+                final res = await ApiService.register(
+                  nameController.text,
+                  emailController.text,
+                  passwordController.text,
+                  selectedRole
+                );
+                if (res['error'] == null) {
+                  Navigator.pop(context);
+                  _fetchStaff();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['error'])));
+                }
+              }, 
+              child: const Text("Add")
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -163,20 +254,26 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? theme.primaryColor : (isDark ? Colors.white10 : Colors.white),
-        border: Border.all(color: isSelected ? theme.primaryColor : theme.dividerColor.withOpacity(0.1)),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColors.textLight),
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-          fontSize: 13,
+    return GestureDetector(
+      onTap: () {
+        activeFilter = label;
+        _applyFilters();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? theme.primaryColor : (isDark ? Colors.white10 : Colors.white),
+          border: Border.all(color: isSelected ? theme.primaryColor : theme.dividerColor.withOpacity(0.1)),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColors.textLight),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 13,
+          ),
         ),
       ),
     );

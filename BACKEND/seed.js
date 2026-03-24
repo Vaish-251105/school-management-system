@@ -12,6 +12,7 @@ import Homework from './src/models/Homework.js';
 import Fee from './src/models/Fee.js';
 import Notice from './src/models/Notice.js';
 import ExamResult from './src/models/ExamResult.js';
+import Timetable from './src/models/Timetable.js';
 
 const roles = ['admin', 'teacher', 'student', 'parent', 'accountant'];
 const password = '123';
@@ -125,6 +126,19 @@ const seed = async () => {
       });
       console.log('✅ Exam Results Seeded');
     }
+
+
+    // Add Timetable
+    await Timetable.create({
+      classId: "10",
+      day: "Monday",
+      periods: [
+        { subject: "Advanced Mathematics", startTime: "09:00 AM", endTime: "10:30 AM", teacher: "PhD. T. Test", room: "302" },
+        { subject: "Physics Lab", startTime: "10:30 AM", endTime: "12:00 PM", teacher: "PhD. T. Test", room: "Lab 04" },
+        { subject: "Institutional Break", startTime: "12:00 PM", endTime: "01:00 PM", teacher: "System", room: "Cafe" }
+      ]
+    });
+    console.log('✅ Timetable Seeded');
 
 
     console.log('\n🌟 ALL ACCOUNTS READY (Incl. Accountant)!');

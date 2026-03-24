@@ -154,7 +154,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                   DataColumn(label: Text("Roll No.")),
                                   DataColumn(label: Text("Present")),
                                 ],
-                                rows: _students.asMap().entries.map((e) {
+                                rows: _students.asMap().entries.map<DataRow>((e) {
                                   final student = e.value;
                                   final id = student['_id'] ?? e.key.toString();
                                   return DataRow(cells: [
