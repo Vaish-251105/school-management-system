@@ -2,13 +2,36 @@ import Student from '../models/Student.js';
 import User from '../models/User.js';
 import asyncHandler from 'express-async-handler';
 
+import bcrypt from 'bcryptjs';
+
 // Create student
 export const createStudent = async (req, res) => {
   try {
-    const { userId, class: studentClass, section, rollNumber } = req.body;
+    let { userId, name, email, password, class: studentClass, section, rollNumber } = req.body;
 
-    if (!userId || !studentClass || !section || !rollNumber) {
-      return res.status(400).json({ message: "All fields are required: userId, class, section, rollNumber" });
+    if (!studentClass || !section || !rollNumber) {
+      return res.status(400).json({ message: "Class, Section, and Roll Number are required" });
+    }
+
+    // If no userId but email is provided, create a new User first
+    if (!userId && email) {
+       const existingUser = await User.findOne({ email });
+       if (existingUser) {
+         userId = existingUser._id;
+       } else {
+         const hashedPassword = await bcrypt.hash(password || '123', 10);
+         const newUser = await User.create({
+           name: name || email.split('@')[0],
+           email,
+           password: hashedPassword,
+           role: 'student'
+         });
+         userId = newUser._id;
+       }
+    }
+
+    if (!userId) {
+       return res.status(400).json({ message: "User ID or Email is required to create a student" });
     }
 
     const student = await Student.create({
@@ -18,7 +41,8 @@ export const createStudent = async (req, res) => {
       rollNumber
     });
 
-    res.status(201).json(student);
+    const populated = await Student.findById(student._id).populate('userId', 'name email role');
+    res.status(201).json(populated);
 
   } catch (error) {
     res.status(500).json({ error: error.message });

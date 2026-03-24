@@ -4,116 +4,197 @@ import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../services/theme_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 import '../auth/login_screen.dart';
 import '../modules/fees_screen.dart';
 import '../modules/exams_screen.dart';
 import '../modules/attendance_screen.dart';
+import '../modules/notification_screen.dart';
+import '../modules/calendar_screen.dart';
+import '../profile/user_profile.dart';
 
-class ParentDashboard extends StatelessWidget {
+class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
+
+  @override
+  State<ParentDashboard> createState() => _ParentDashboardState();
+}
+
+class _ParentDashboardState extends State<ParentDashboard> {
+  bool _isLoading = true;
+  double _dues = 0;
+  List<dynamic> _children = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final stats = await ApiService.getDashboardStats();
+      final students = await ApiService.getStudents();
+      final fees = await ApiService.getFees();
+      
+      // Calculate real dues from fees collection
+      double totalDues = 0;
+      for (var f in fees) {
+        bool isPaid = f['paid'] == true || f['status'] == 'paid';
+        if (!isPaid) {
+          totalDues += (f['amount'] ?? 0).toDouble();
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _dues = totalDues;
+          _children = students.take(2).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeProvider>().isDarkMode;
+    final parentName = context.watch<AuthService>().name;
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // HEADER
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFE11D48), Color(0xFF9F1239)],
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // HEADER
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFE11D48), Color(0xFF9F1239)],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(50),
+                    bottomRight: Radius.circular(50),
+                  ),
                 ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(50),
-                  bottomRight: Radius.circular(50),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Parent Portal",
-                              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                          const SizedBox(height: 4),
-                          Text("Hello, ${context.watch<AuthService>().name}",
-                              style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
-                            icon: Icon(isDark ? LucideIcons.sun : LucideIcons.moon, color: Colors.white),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text("Parent Portal",
+                                  style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                              const SizedBox(height: 4),
+                              Text("Hello, ${parentName.split(' ')[0]}",
+                                  style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              context.read<AuthService>().logout();
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                            },
-                            child: const CircleAvatar(
-                              radius: 26,
-                              backgroundColor: Colors.white24,
-                              child: Icon(LucideIcons.logOut, color: Colors.white, size: 22),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+                              icon: Icon(isDark ? LucideIcons.sun : LucideIcons.moon, color: Colors.white),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
+                              child: const CircleAvatar(
+                                radius: 26,
+                                backgroundColor: Colors.white24,
+                                child: Icon(LucideIcons.user, color: Colors.white, size: 22),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    _isLoading 
+                      ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                      : _buildStatsRow(),
+                  ],
+                ),
+              ),
+  
+              const SizedBox(height: 32),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Child Management",
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.4,
+                      children: [
+                        _buildParentCard(context, "Fees Panel", "Clear Invoices", LucideIcons.creditCard, Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen())).then((_) => _loadData())),
+                        _buildParentCard(context, "Academic", "Check Grades", LucideIcons.lineChart, Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExamsScreen()))),
+                        _buildParentCard(context, "Attendance", "Daily Logs", LucideIcons.checkCircle, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
+                        _buildParentCard(context, "Notices", "School Updates", LucideIcons.megaphone, Colors.purple, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()))),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    Text("Student Profiles",
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                    const SizedBox(height: 16),
+                    if (_children.isEmpty && !_isLoading)
+                       const Center(child: Text("No children records linked yet")),
+                    ..._children.map((child) => _buildChildTile(
+                      child['userId']?['name'] ?? child['name'] ?? "Student", 
+                      "Grade ${child['class'] ?? 'N/A'}-${child['section'] ?? 'A'}", 
+                      "ID: ${(child['_id'] ?? '...').toString().substring(0,6).toUpperCase()}", 
+                      Colors.indigo
+                    )),
+                    
+                    const SizedBox(height: 32),
+                    // CALENDAR TILE
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.indigo.withOpacity(0.1)),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  _buildStatsRow(),
-                ],
+                      child: ListTile(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AcademicCalendarScreen())),
+                        leading: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: Colors.indigo, borderRadius: BorderRadius.circular(16)),
+                          child: const Icon(LucideIcons.calendar, color: Colors.white, size: 24),
+                        ),
+                        title: const Text("Institutional Calendar", style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: const Text("View exams, holidays & events"),
+                        trailing: const Icon(LucideIcons.chevronRight),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 32),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Quick Actions",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
-                  const SizedBox(height: 16),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1.4,
-                    children: [
-                      _buildParentCard(context, "Fee Payment", "Instant Fees Pay", LucideIcons.creditCard, Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen()))),
-                      _buildParentCard(context, "Performance", "Check Grades", LucideIcons.lineChart, Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExamsScreen()))),
-                      _buildParentCard(context, "Attendance", "Daily Absents", LucideIcons.checkCircle, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
-                      _buildParentCard(context, "Circulars", "School Notices", LucideIcons.megaphone, Colors.purple, () {}),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  Text("My Children",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
-                  const SizedBox(height: 16),
-                  _buildChildTile("Alexander", "Grade 10-A", "94.2% Att.", Colors.indigo),
-                  _buildChildTile("Sophia", "Grade 6-B", "98.5% Att.", Colors.pink),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 100),
+            ],
+          ),
         ),
       ),
     );
@@ -130,11 +211,11 @@ class ParentDashboard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _statItem("Dues", "\$ 450"),
+          _statItem("Dues", "₹${_dues.toStringAsFixed(0)}"),
           Container(height: 30, width: 1, color: Colors.white10),
-          _statItem("Children", "02"),
+          _statItem("Children", _children.length.toString().padLeft(2, '0')),
           Container(height: 30, width: 1, color: Colors.white10),
-          _statItem("Level", "Silver"),
+          _statItem("Status", "Active"),
         ],
       ),
     );
@@ -172,14 +253,14 @@ class ParentDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildChildTile(String name, String grade, String att, Color color) {
+  Widget _buildChildTile(String name, String grade, String id, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Row(
         children: [
@@ -197,7 +278,7 @@ class ParentDashboard extends StatelessWidget {
               ],
             ),
           ),
-          Text(att, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(id, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10)),
           const SizedBox(width: 8),
           const Icon(LucideIcons.chevronRight, size: 18, color: Colors.grey),
         ],

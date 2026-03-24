@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ChevronLeft, 
   MoreVertical,
@@ -12,25 +12,55 @@ import {
   ArrowRight,
   Plus
 } from "lucide-react";
+import api from "../utils/api";
 
 export default function Fees() {
+  const [fees, setFees] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFees = async () => {
+      try {
+        const response = await api.get("/fees");
+        setFees(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFees();
+  }, []);
+
+  const handlePay = async (id) => {
+    try {
+      const transactionId = "TXN" + Math.random().toString(36).substr(2, 9).toUpperCase();
+      const response = await api.post(`/fees/pay/${id}`, { transactionId });
+      if (response.data) {
+        alert(`Payment successful! Transaction ID: ${transactionId}`);
+        const refreshRes = await api.get("/fees");
+        setFees(Array.isArray(refreshRes.data) ? refreshRes.data : []);
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      alert("Payment failed. Please try again.");
+    }
+  };
+
+  const totalReceived = fees.filter(f => f.paid).reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const totalPending = fees.filter(f => !f.paid).reduce((acc, curr) => acc + (curr.amount || 0), 0);
+
   return (
     <div className="bg-[#fafafa] min-h-screen font-sans flex flex-col pb-28">
-      
       {/* HEADER AREA */}
       <div className="bg-[#4f46e5] px-6 pt-12 pb-8 rounded-b-[40px] shadow-lg shrink-0">
         <div className="max-w-4xl mx-auto">
-          
           <div className="flex justify-between items-center mb-8">
-            <button 
-              onClick={() => window.history.back()}
-              className="text-white hover:bg-white/10 p-2 rounded-full transition">
+            <button onClick={() => window.history.back()} className="text-white hover:bg-white/10 p-2 rounded-full transition">
               <ChevronLeft className="w-6 h-6" />
             </button>
             <h1 className="text-white text-lg font-bold">Fees & Payments</h1>
-            <button 
-              onClick={() => alert("Settings for Fees module coming soon")}
-              className="text-white p-2 hover:bg-white/10 rounded-full transition">
+            <button onClick={() => alert("Settings for Fees module coming soon")} className="text-white p-2 hover:bg-white/10 rounded-full transition">
               <MoreVertical className="w-5 h-5" />
             </button>
           </div>
@@ -39,73 +69,57 @@ export default function Fees() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-white/80 text-[12px]">Total Collection</p>
-                <h2 className="text-white text-[28px] font-bold tracking-tight">$42,500.00</h2>
+                <h2 className="text-white text-[28px] font-bold tracking-tight">${(totalReceived + totalPending).toFixed(2)}</h2>
               </div>
               <div className="bg-white/20 rounded-full px-3 py-1.5 flex items-center gap-1.5">
                 <TrendingUp className="text-white w-3 h-3" />
                 <span className="text-white font-bold text-[11px]">+12.5%</span>
               </div>
             </div>
-
             <hr className="border-white/20 my-4" />
-
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-white/80 text-[11px]">Received</p>
-                <h3 className="text-white text-[16px] font-bold">$38,200</h3>
+                <h3 className="text-white text-[16px] font-bold">${totalReceived.toFixed(2)}</h3>
               </div>
               <div className="w-px h-8 bg-white/20"></div>
               <div>
                 <p className="text-white/80 text-[11px]">Pending</p>
-                <h3 className="text-white text-[16px] font-bold">$4,300</h3>
+                <h3 className="text-white text-[16px] font-bold">${totalPending.toFixed(2)}</h3>
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* BODY CONTENT */}
       <div className="max-w-4xl mx-auto px-6 mt-6 w-full flex-1">
-        
-        {/* CHIPS */}
         <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
           <button className="bg-[#4f46e5] border border-[#4f46e5] text-white font-bold px-4 py-2 rounded-full text-[13px] shrink-0 shadow-sm flex items-center gap-1.5">
             <Check className="w-4 h-4" /> All Fees
           </button>
-          <button className="bg-white text-gray-700 font-medium px-5 py-2 rounded-full text-[13px] shrink-0 border border-gray-200 hover:bg-gray-50 transition">
-            Tuition
-          </button>
-          <button className="bg-white text-gray-700 font-medium px-5 py-2 rounded-full text-[13px] shrink-0 border border-gray-200 hover:bg-gray-50 transition">
-            Transport
-          </button>
-          <button className="bg-white text-gray-700 font-medium px-5 py-2 rounded-full text-[13px] shrink-0 border border-gray-200 hover:bg-gray-50 transition">
-            Examination
-          </button>
         </div>
 
-        {/* RECENT TRANSACTIONS */}
         <div className="flex justify-between items-end mb-4">
           <h3 className="text-gray-900 font-bold text-[18px]">Recent Transactions</h3>
-          <button className="text-[#4f46e5] font-medium text-[13px]">See All</button>
         </div>
 
         <div className="space-y-4 mb-4">
-          <FeeCard title="Tuition Fee - Grade 10-A" subtitle="Student: Alex Johnson" date="Oct 15, 2023" amount="$1,200.00" status="Paid" hasPay={false} />
-          <FeeCard title="Bus Fee - Route 04" subtitle="Student: Sarah Williams" date="Oct 20, 2023" amount="$150.00" status="Pending" hasPay={true} />
+          {loading ? (
+            <p className="text-center py-10">Loading transactions...</p>
+          ) : fees.length > 0 ? (
+            fees.map((f) => (
+              <FeeCard 
+                key={f._id} id={f._id} title={`${f.type} Fee`} subtitle={`Student ID: ${f.studentId}`}
+                date={new Date(f.dueDate).toLocaleDateString()} amount={`$${f.amount.toFixed(2)}`}
+                status={f.paid ? "Paid" : "Pending"} hasPay={!f.paid} onPay={handlePay}
+              />
+            ))
+          ) : (
+            <div className="p-8 text-center text-gray-500 italic">No fee records found</div>
+          )}
         </div>
 
-        {/* SECTION HEADER */}
-        <div className="flex items-center gap-3 pt-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-[#4f46e5] font-bold text-xs">SW</div>
-          <h3 className="text-gray-900 font-bold text-[16px]">Sarah Williams's Fees</h3>
-        </div>
-
-        <div className="space-y-4 mb-4">
-          <FeeCard title="Quarterly Tuition" subtitle="Term 2 (2023-24)" date="Nov 05, 2023" amount="$850.00" status="Pending" hasPay={true} />
-          <FeeCard title="Lab & Library Charges" subtitle="Annual 2023" date="Sep 10, 2023" amount="$200.00" status="Paid" hasPay={false} />
-          <FeeCard title="Sports Kit Fee" subtitle="One-time payment" date="Aug 15, 2023" amount="$75.00" status="Overdue" hasPay={true} />
-        </div>
 
         {/* FINANCIAL INSIGHTS */}
         <div className="mt-8 bg-indigo-50/50 border border-indigo-100/50 p-4 rounded-3xl shadow-sm flex items-center mb-6">
@@ -135,7 +149,7 @@ export default function Fees() {
   );
 }
 
-function FeeCard({ title, subtitle, date, amount, status, hasPay }) {
+function FeeCard({ id, title, subtitle, date, amount, status, hasPay, onPay }) {
   
   let badgeClasses = "bg-transparent text-gray-800";
   if (status === "Paid") badgeClasses = "bg-green-50 text-green-700";
@@ -168,20 +182,28 @@ function FeeCard({ title, subtitle, date, amount, status, hasPay }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <button className="bg-indigo-50 text-[#4f46e5] py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 hover:bg-indigo-100 transition">
+        <button 
+          onClick={() => alert("Reminder sent to registered parent/guardian.")}
+          className="bg-indigo-50 text-[#4f46e5] py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 hover:bg-indigo-100 transition">
           <Bell className="w-3.5 h-3.5" /> Send Reminder
         </button>
-        <button className="bg-[#4f46e5] text-white py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-indigo-600 transition">
+        <button 
+          onClick={() => onPay(id)}
+          className="bg-[#4f46e5] text-white py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-indigo-600 transition">
           <CheckCircle2 className="w-3.5 h-3.5" /> Mark Paid
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <button className="bg-white border text-gray-500 border-gray-200 py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition">
+        <button 
+          onClick={() => alert("Generating digital receipt...")}
+          className="bg-white border text-gray-500 border-gray-200 py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition">
           <Download className="w-3.5 h-3.5" /> Receipt
         </button>
         {hasPay && (
-          <button className="bg-[#2d5a27] text-white py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-green-900 transition">
+          <button 
+            onClick={() => onPay(id)}
+            className="bg-[#2d5a27] text-white py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-green-900 transition">
             <Banknote className="w-3.5 h-3.5" /> Pay Now
           </button>
         )}

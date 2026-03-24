@@ -11,6 +11,9 @@ import '../modules/timetable_screen.dart';
 import '../modules/exams_screen.dart';
 import '../modules/homework_screen.dart';
 import '../modules/bus_screen.dart';
+import '../modules/notification_screen.dart';
+import '../modules/calendar_screen.dart';
+import '../profile/user_profile.dart';
 
 class MainDashboard extends StatelessWidget {
   const MainDashboard({super.key});
@@ -82,14 +85,11 @@ class MainDashboard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
-                            onTap: () {
-                              context.read<AuthService>().logout();
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                            },
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
                             child: const CircleAvatar(
                               radius: 28,
                               backgroundColor: Colors.white24,
-                              child: Icon(LucideIcons.logOut, color: Colors.white, size: 24),
+                              child: Icon(LucideIcons.user, color: Colors.white, size: 24),
                             ),
                           ),
                         ],
@@ -145,8 +145,8 @@ class MainDashboard extends StatelessWidget {
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                     children: [
-                      ModuleCard("Attendance", "Check history", LucideIcons.calendar, Colors.blue, 
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
+                      ModuleCard("Calendar", "Events & Holidays", LucideIcons.calendar, Colors.blue, 
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AcademicCalendarScreen()))),
                       ModuleCard("Fees", "Pay Invoices", LucideIcons.wallet, Colors.purple,
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen()))),
                       ModuleCard("Timetable", "View schedule", LucideIcons.bookOpen, Colors.orange,
@@ -201,10 +201,13 @@ class MainDashboard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                          child: const Icon(LucideIcons.bell, color: AppColors.primary, size: 18),
+                        GestureDetector(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: const Icon(LucideIcons.bell, color: AppColors.primary, size: 18),
+                          ),
                         ),
                       ],
                     ),
@@ -217,7 +220,7 @@ class MainDashboard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Notice Board", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                      TextButton(onPressed: () {}, child: const Text("View All", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold))),
+                      TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())), child: const Text("View All", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold))),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -325,7 +328,7 @@ class NoticeTile extends StatelessWidget {
       title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
       subtitle: Text(time, style: const TextStyle(fontSize: 11, color: AppColors.textLight)),
       trailing: const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.textLight),
-      onTap: () {},
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())),
     );
   }
 }

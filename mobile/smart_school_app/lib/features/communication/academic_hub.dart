@@ -77,9 +77,9 @@ class AcademicHubScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  _buildChip(Icons.check, "All Updates", true),
-                  _buildChip(Icons.message_outlined, "Messages", false),
-                  _buildChip(Icons.person_outline, "Teachers", false),
+                  _buildChip(Icons.check, "All Updates", true, () {}),
+                  _buildChip(Icons.message_outlined, "Messages", false, () => _showMessages()),
+                  _buildChip(Icons.person_outline, "Teachers", false, () => _showTeachers()),
                 ],
               ),
             ),
@@ -95,7 +95,7 @@ class AcademicHubScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Important Notices", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textDark)),
-                      TextButton(onPressed: (){}, child: const Text("View Archive", style: TextStyle(color: AppColors.primary, fontSize: 13))),
+                      TextButton(onPressed: _viewNoticeArchive, child: const Text("View Archive", style: TextStyle(color: AppColors.primary, fontSize: 13))),
                     ],
                   ),
                   Container(
@@ -143,7 +143,7 @@ class AcademicHubScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Your Instructors", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textDark)),
-                      TextButton(onPressed: (){}, child: const Text("Directory", style: TextStyle(color: AppColors.primary, fontSize: 13))),
+                      TextButton(onPressed: _showTeacherDirectory, child: const Text("Directory", style: TextStyle(color: AppColors.primary, fontSize: 13))),
                     ],
                   ),
                   _buildInstructorCard("SJ", "Dr. Sarah Jenkins", "Advanced Mathematics", "s.jenkins@school.edu"),
@@ -183,7 +183,7 @@ class AcademicHubScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: _openNewMessage,
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text("New Message", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -201,21 +201,24 @@ class AcademicHubScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(IconData icon, String label, bool isSelected) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary : Colors.white,
-        border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: isSelected ? Colors.white : AppColors.textDark, size: 16),
-          const SizedBox(width: 8),
-          Text(label, style: TextStyle(color: isSelected ? Colors.white : AppColors.textDark, fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500)),
-        ],
+  Widget _buildChip(IconData icon, String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : AppColors.textDark, size: 16),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(color: isSelected ? Colors.white : AppColors.textDark, fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500)),
+          ],
+        ),
       ),
     );
   }
@@ -259,7 +262,10 @@ class AcademicHubScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.chat_bubble, color: AppColors.primary, size: 18),
+            child: GestureDetector(
+              onTap: () => _sendMessageToTeacher(name),
+              child: const Icon(Icons.chat_bubble, color: AppColors.primary, size: 18),
+            ),
           )
         ],
       ),
@@ -363,6 +369,26 @@ class AcademicHubScreen extends StatelessWidget {
           )
         ],
       ),
-    );
+  void _showMessages() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Opening messages...")));
   }
-}
+
+  void _showTeachers() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Opening teacher directory...")));
+  }
+
+  void _viewNoticeArchive() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Opening notice archive...")));
+  }
+
+  void _showTeacherDirectory() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Opening teacher directory...")));
+  }
+
+  void _openNewMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Composing new message...")));
+  }
+
+  void _sendMessageToTeacher(String teacherName) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Opening chat with $teacherName...")));
+  }

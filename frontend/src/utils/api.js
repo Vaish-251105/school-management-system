@@ -1,28 +1,40 @@
-const API_BASE_URL = "http://localhost:5000/api";
+import axios from 'axios';
 
-export const fetchWithAuth = async (endpoint, options = {}) => {
-  const token = localStorage.getItem("token");
-  const headers = {
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
     "Content-Type": "application/json",
-    ...options.headers,
-  };
+  },
+});
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (response.status === 401) {
-    // Handle unauthorized - maybe redirect to login
-    // localStorage.removeItem("token");
-    // window.location.href = "/login";
+// Response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Clean up on unauthorized
+      localStorage.removeItem("token");
+      localStorage.removeItem("currentUser");
+      // Optional: window.location.href = "/login";
+    }
+    return Promise.reject(error);
   }
+);
 
-  return response;
-};
-
-export default API_BASE_URL;
+export default api;

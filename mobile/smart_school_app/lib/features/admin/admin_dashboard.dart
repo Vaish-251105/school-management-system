@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/theme_service.dart';
+import '../../services/auth_service.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/colors.dart';
 import '../academic/classes_subjects.dart';
 import '../staff/staff_directory.dart';
 import '../../services/api_service.dart';
 import '../auth/login_screen.dart';
+import '../modules/notification_screen.dart';
+import '../modules/calendar_screen.dart';
+import '../profile/user_profile.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -43,27 +47,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  void _showComingSoon(BuildContext context, String module) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Module: $module is coming soon!"),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isAdminDark = context.watch<ThemeProvider>().isDarkMode;
+    final adminName = context.watch<AuthService>().name;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showComingSoon(context, "Quick Action"),
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffDirectoryScreen())),
         backgroundColor: AppColors.primary,
         elevation: 10,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        label: const Text("Quick Action", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        label: const Text("Add Staff", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         icon: const Icon(LucideIcons.plus, color: Colors.white),
       ),
       body: RefreshIndicator(
@@ -89,36 +85,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("Admin Console",
-                            style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Smart Admin Panel",
+                                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                              const SizedBox(height: 4),
+                              Text("Hello, ${adminName.split(' ')[0]}",
+                                  style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
                         Row(
                           children: [
                             IconButton(
                               onPressed: () => context.read<ThemeProvider>().toggleTheme(),
                               icon: Icon(
-                                context.watch<ThemeProvider>().isDarkMode ? LucideIcons.sun : LucideIcons.moon,
+                                isAdminDark ? LucideIcons.sun : LucideIcons.moon,
                                 color: Colors.white,
                                 size: 22,
                               ),
                             ),
                             IconButton(
-                              onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
-                              icon: const Icon(LucideIcons.logOut, color: Colors.white, size: 24),
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfileScreen())),
+                              icon: const Icon(LucideIcons.user, color: Colors.white, size: 24),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    const Text("Institution Management System",
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
                     const SizedBox(height: 32),
                     isLoading 
                       ? const Center(child: CircularProgressIndicator(color: Colors.white))
                       : Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildHeaderStat("Teachers", teacherCount.toString(), LucideIcons.users),
+                          _buildHeaderStat("Staff", teacherCount.toString(), LucideIcons.users),
                           _buildHeaderStat("Classes", classCount.toString(), LucideIcons.layers),
                           _buildHeaderStat("Students", studentCount.toString(), LucideIcons.graduationCap),
                         ],
@@ -146,14 +149,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                       children: [
-                        AdminCard("Add Teacher", "New faculty", LucideIcons.userPlus, Colors.blue, 
+                        AdminCard("Staff List", "New faculty", LucideIcons.userPlus, Colors.blue, 
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffDirectoryScreen()))),
                         AdminCard("Classes", "Manage sections", LucideIcons.layout, Colors.purple,
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClassesSubjectsScreen()))),
-                        AdminCard("Announce", "Bulk updates", LucideIcons.megaphone, Colors.orange, onTap: () => _showComingSoon(context, "Announcements")),
-                        AdminCard("Reports", "Analytics", LucideIcons.barChart3, Colors.green, onTap: () => _showComingSoon(context, "Reports")),
-                        AdminCard("Inventory", "School assets", LucideIcons.box, Colors.pink, onTap: () => _showComingSoon(context, "Inventory")),
-                        AdminCard("Events", "School calendar", LucideIcons.calendar, Colors.indigo, onTap: () => _showComingSoon(context, "Calendar")),
+                        AdminCard("Announce", "Bulk updates", LucideIcons.megaphone, Colors.orange, 
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()))),
+                        AdminCard("Analytics", "Growth reports", LucideIcons.barChart3, Colors.green, onTap: () {}),
+                        AdminCard("Fees Status", "Audit dues", LucideIcons.wallet, Colors.teal, onTap: () {}),
+                        AdminCard("Calendar", "Institutional events", LucideIcons.calendar, Colors.indigo, 
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AcademicCalendarScreen()))),
                       ],
                     ),
                     
@@ -181,16 +186,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: const [
-                                Text("Smart Notifications", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text("Smart Portal", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                                 SizedBox(height: 4),
-                                Text("Broadcast updates instantly to all parents and staff members.", style: TextStyle(color: Colors.white60, fontSize: 13)),
+                                Text("Complete oversight of all institutional modules in real-time.", style: TextStyle(color: Colors.white60, fontSize: 13)),
                               ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
@@ -237,7 +242,7 @@ class AdminCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
           boxShadow: [
             BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
           ],

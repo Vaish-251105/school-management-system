@@ -1,11 +1,55 @@
-import 'package:flutter/material.dart';
-import '../../core/constants/colors.dart';
+import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
-class ExamResultsScreen extends StatelessWidget {
+class ExamResultsScreen extends StatefulWidget {
   const ExamResultsScreen({super.key});
 
   @override
+  State<ExamResultsScreen> createState() => _ExamResultsScreenState();
+}
+
+class _ExamResultsScreenState extends State<ExamResultsScreen> {
+  List<dynamic> _results = [];
+  bool _isLoading = true;
+  double _gpa = 3.85;
+  double _percentage = 89.4;
+  String _rank = "4th";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadResults();
+  }
+
+  Future<void> _loadResults() async {
+    setState(() => _isLoading = true);
+    final results = await ApiService.getExamResults();
+    if (mounted) {
+      setState(() {
+        _results = results;
+        // Simple logic for GPA/Percentage demo if real results exist
+        if (_results.isNotEmpty) {
+           _calculateStats();
+        }
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _calculateStats() {
+     // Placeholder calculation logic
+     double totalMarks = 0;
+     for (var res in _results) {
+       totalMarks += (res['marks'] ?? 0);
+     }
+     _percentage = totalMarks / (_results.length * 100) * 100;
+     _gpa = (_percentage / 100) * 4.0;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthService>();
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
@@ -13,15 +57,18 @@ class ExamResultsScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF9FAFB),
         elevation: 0,
         centerTitle: true,
-        leading: const Icon(Icons.arrow_back, color: AppColors.textDark),
-        actions: const [
-          Padding(
+        leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: AppColors.textDark)),
+        actions: [
+          IconButton(onPressed: _loadResults, icon: const Icon(Icons.refresh, color: AppColors.primary)),
+          const Padding(
             padding: EdgeInsets.only(right: 20),
             child: Icon(Icons.download, color: AppColors.primary),
           )
         ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -43,14 +90,14 @@ class ExamResultsScreen extends StatelessWidget {
                       width: 60, height: 60,
                       decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                       alignment: Alignment.center,
-                      child: const Text("JD", style: TextStyle(color: AppColors.primary, fontSize: 20, fontWeight: FontWeight.bold)),
+                      child: Text(user.name.substring(0, 2).toUpperCase(), style: const TextStyle(color: AppColors.primary, fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("John Doe", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                          Text(user.name, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
                           Text("ID: #STU90210 • Class 10-B", style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
                           const SizedBox(height: 10),
@@ -72,9 +119,9 @@ class ExamResultsScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildStatCard("GPA", "3.85", "/ 4.0"),
-                  _buildStatCard("Percentage", "89.4", "%"),
-                  _buildStatCard("Rank", "4th", "/ 45"),
+                  _buildStatCard("GPA", _gpa.toStringAsFixed(2), "/ 4.0"),
+                  _buildStatCard("Percentage", _percentage.toStringAsFixed(1), "%"),
+                  _buildStatCard("Rank", _rank, "/ 45"),
                 ],
               ),
 
@@ -93,18 +140,14 @@ class ExamResultsScreen extends StatelessWidget {
                   children: [
                     const Text("Subject Wise Analysis", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textDark)),
                     const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                         _buildChartBar("Math", 85),
-                         _buildChartBar("Sci", 95),
-                         _buildChartBar("Eng", 70),
-                         _buildChartBar("His", 80),
-                         _buildChartBar("CS", 100),
-                         _buildChartBar("Art", 75),
-                      ],
-                    )
+                    if (_results.isEmpty)
+                       const Center(child: Text("No subject data available"))
+                    else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: _results.take(6).map((r) => _buildChartBar(r['subject']?.substring(0, 3) ?? "Sub", (r['marks'] ?? 0).toDouble())).toList(),
+                      )
                   ],
                 ),
               ),
@@ -140,25 +183,41 @@ class ExamResultsScreen extends StatelessWidget {
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
-                  children: [
-                    _buildMarkRow("M", "Mathematics", "A", "85", "{85 >= 40 ? Pass : Fail}"),
-                    const Divider(height: 1),
-                    _buildMarkRow("S", "Science", "A+", "92", "{92 >= 40 ? Pass : Fail}"),
-                    const Divider(height: 1),
-                    _buildMarkRow("E", "English", "B+", "78", "{78 >= 40 ? Pass : Fail}"),
-                    const Divider(height: 1),
-                    _buildMarkRow("H", "History", "A", "88", "{88 >= 40 ? Pass : Fail}"),
-                    const Divider(height: 1),
-                    _buildMarkRow("C", "Computer Science", "A+", "95", "{95 >= 40 ? Pass : Fail}"),
-                    const Divider(height: 1),
-                    _buildMarkRow("A", "Arts & Crafts", "B", "82", "{82 >= 40 ? Pass : Fail}"),
-                  ],
+                  children: _results.isEmpty 
+                    ? [const Padding(padding: EdgeInsets.all(20), child: Text("No detailed marks available"))]
+                    : _results.map((r) => Column(
+                        children: [
+                          _buildMarkRow(
+                            r['subject']?.substring(0, 1) ?? "S", 
+                            r['subject'] ?? "Subject", 
+                            (r['marks'] ?? 0) >= 90 ? "A+" : ((r['marks'] ?? 0) >= 80 ? "A" : "B"), 
+                            (r['marks'] ?? 0).toString(), 
+                            (r['marks'] ?? 0) >= 40 ? "Pass" : "Fail"
+                          ),
+                          const Divider(height: 1),
+                        ],
+                      )).toList(),
                 ),
               ),
 
               const SizedBox(height: 24),
 
               /// TEACHER REMARKS
+              if (context.watch<AuthService>().role == 'teacher')
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: ElevatedButton.icon(
+                    onPressed: _showAddMarkDialog,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    icon: const Icon(Icons.add_chart, color: Colors.white),
+                    label: const Text("Add Subject Mark", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -169,17 +228,19 @@ class ExamResultsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: const [
+                    const Row(
+                      children: [
                         Icon(Icons.chat, color: AppColors.primary, size: 16),
                         SizedBox(width: 8),
                         Text("Teacher's Remarks", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      "John has shown exceptional growth in logical reasoning and computer sciences. He is encouraged to participate more in English literary activities to improve his verbal communication.",
-                      style: TextStyle(color: AppColors.textDark, height: 1.5, fontSize: 13),
+                    Text(
+                      _results.isNotEmpty 
+                        ? "The student is performing well. " + (_percentage > 80 ? "Keep up the excellent work!" : "Needs more focus on core subjects.")
+                        : "No remarks available yet.",
+                      style: const TextStyle(color: AppColors.textDark, height: 1.5, fontSize: 13),
                     )
                   ],
                 ),
@@ -191,7 +252,9 @@ class ExamResultsScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Generating digital report card...")));
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -205,6 +268,40 @@ class ExamResultsScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showAddMarkDialog() {
+    final subController = TextEditingController();
+    final markController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add Exam Mark"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: subController, decoration: const InputDecoration(labelText: "Subject")),
+            TextField(controller: markController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Marks (Out of 100)")),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              await ApiService.submitExamResult({
+                "subject": subController.text,
+                "marks": int.tryParse(markController.text) ?? 0,
+                "studentId": "placeholder_id",
+              });
+              Navigator.pop(context);
+              _loadResults();
+            }, 
+            child: const Text("Save")
+          ),
+        ],
       ),
     );
   }

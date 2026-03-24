@@ -11,6 +11,12 @@ import studentRoutes from './src/routes/studentRoutes.js';
 import teacherRoutes from './src/routes/teacherRoutes.js';
 import attendanceRoutes from './src/routes/attendanceRoutes.js';
 import dashboardRoutes from './src/routes/dashboardRoutes.js';
+import homeworkRoutes from './src/routes/homeworkRoutes.js';
+import examRoutes from './src/routes/examRoutes.js';
+import feeRoutes from './src/routes/feeRoutes.js';
+import noticeRoutes from './src/routes/noticeRoutes.js';
+import expenseRoutes from './src/routes/expenseRoutes.js';
+import messageRoutes from './src/routes/messageRoutes.js';
 
 import { errorHandler } from './src/middleware/errorMiddleware.js';
 
@@ -37,6 +43,13 @@ app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/homework', homeworkRoutes);
+app.use('/api/exams', examRoutes);
+app.use('/api/fees', feeRoutes);
+app.use('/api/notices', noticeRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/messages', messageRoutes);
+
 
 app.use(errorHandler);
 

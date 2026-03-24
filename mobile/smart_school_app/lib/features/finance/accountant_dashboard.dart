@@ -3,114 +3,231 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../services/theme_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 import '../auth/login_screen.dart';
 import '../modules/fees_screen.dart';
 
-class AccountantDashboard extends StatelessWidget {
+class AccountantDashboard extends StatefulWidget {
   const AccountantDashboard({super.key});
+
+  @override
+  State<AccountantDashboard> createState() => _AccountantDashboardState();
+}
+
+class _AccountantDashboardState extends State<AccountantDashboard> {
+  bool _isLoading = true;
+  double _todayCollection = 0;
+  double _monthCollection = 0;
+  double _pendingDues = 0;
+  List<dynamic> _recentTxs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFinanceData();
+  }
+
+  Future<void> _loadFinanceData() async {
+    setState(() => _isLoading = true);
+    try {
+      final fees = await ApiService.getFees();
+      final expenses = await ApiService.getExpenses();
+      
+      double today = 0;
+      double month = 0;
+      double pending = 0;
+      
+      final now = DateTime.now();
+      
+      for (var f in fees) {
+        double amt = (f['amount'] ?? 0).toDouble();
+        bool isPaid = f['paid'] == true || f['status'] == 'paid';
+        
+        if (isPaid) {
+          DateTime paidDate = DateTime.parse(f['paidDate'] ?? f['updatedAt'] ?? f['createdAt']);
+          if (paidDate.day == now.day && paidDate.month == now.month && paidDate.year == now.year) {
+            today += amt;
+          }
+          if (paidDate.month == now.month && paidDate.year == now.year) {
+            month += amt;
+          }
+        } else {
+          pending += amt;
+        }
+      }
+
+      // Combine for recent txs
+      List<dynamic> combined = [];
+      combined.addAll(fees.map((f) => {...f, 'isFee': true}));
+      combined.addAll(expenses.map((e) => {...e, 'isFee': false}));
+      combined.sort((a, b) => b['createdAt'].toString().compareTo(a['createdAt'].toString()));
+
+      if (mounted) {
+        setState(() {
+          _todayCollection = today;
+          _monthCollection = month;
+          _pendingDues = pending;
+          _recentTxs = combined.take(5).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeProvider>().isDarkMode;
+    final userName = context.watch<AuthService>().name;
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // HEADER
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0D9488), Color(0xFF0F766E)],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(50),
-                  bottomRight: Radius.circular(50),
-                ),
-              ),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _loadFinanceData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Finance Portal",
-                              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                          const SizedBox(height: 4),
-                          const Text("Hello, Mr. Accountant",
-                              style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
-                        ],
+                  // HEADER
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF0D9488), Color(0xFF0F766E)],
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
-                            icon: Icon(isDark ? LucideIcons.sun : LucideIcons.moon, color: Colors.white),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
-                            child: const CircleAvatar(
-                              radius: 26,
-                              backgroundColor: Colors.white24,
-                              child: Icon(LucideIcons.logOut, color: Colors.white, size: 22),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(50),
+                        bottomRight: Radius.circular(50),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Finance Portal",
+                                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                                const SizedBox(height: 4),
+                                Text("Hello, ${userName.split(' ')[0]}",
+                                    style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+                                  icon: Icon(isDark ? LucideIcons.sun : LucideIcons.moon, color: Colors.white),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () {
+                                    context.read<AuthService>().logout();
+                                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                                  },
+                                  child: const CircleAvatar(
+                                    radius: 26,
+                                    backgroundColor: Colors.white24,
+                                    child: Icon(LucideIcons.logOut, color: Colors.white, size: 22),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        _buildStatsRow(),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 32),
-                  _buildStatsRow(),
-                ],
-              ),
-            ),
 
-            const SizedBox(height: 32),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Financial Actions",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
-                  const SizedBox(height: 16),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1.4,
-                    children: [
-                      _buildFinCard(context, "Collect Fees", "Student Payments", LucideIcons.plusCircle, Colors.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen()))),
-                      _buildFinCard(context, "Expenses", "Manage Spending", LucideIcons.trendingDown, Colors.red, () {}),
-                      _buildFinCard(context, "Payroll", "Staff Salaries", LucideIcons.users, Colors.indigo, () {}),
-                      _buildFinCard(context, "Reports", "Monthly Statements", LucideIcons.fileText, Colors.orange, () {}),
-                    ],
-                  ),
-                  
                   const SizedBox(height: 32),
-                  Text("Recent Transactions",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
-                  const SizedBox(height: 16),
-                  _buildTxTile("Alexander B.", "Term Fees", "+ \$ 450", Colors.green),
-                  _buildTxTile("Utility Bill", "Electricity Sep", "- \$ 120", Colors.red),
-                  _buildTxTile("Sophia Chen", "Library Fine", "+ \$ 15", Colors.green),
+                  
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Financial Actions",
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                        const SizedBox(height: 16),
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 1.4,
+                          children: [
+                            _buildFinCard(context, "Fees", "Manage Payments", LucideIcons.plusCircle, Colors.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeesScreen())).then((_) => _loadFinanceData())),
+                            _buildFinCard(context, "Expenses", "Record Spending", LucideIcons.trendingDown, Colors.red, () => _showExpenseEntry()),
+                            _buildFinCard(context, "Payroll", "Staff Salaries", LucideIcons.users, Colors.indigo, () {}),
+                            _buildFinCard(context, "Sync", "Refresh Data", LucideIcons.refreshCw, Colors.orange, _loadFinanceData),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        Text("Recent Ledger Logs",
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                        const SizedBox(height: 16),
+                        ..._recentTxs.map((tx) => _buildTxTile(
+                          tx['isFee'] ? (tx['studentId']?['name'] ?? "Student Fee") : (tx['title'] ?? "Expense"), 
+                          tx['isFee'] ? "Fee Receipt" : "Operation Spend", 
+                          "${tx['isFee'] ? '+' : '-'} ₹${tx['amount']}", 
+                          tx['isFee'] ? Colors.green : Colors.red
+                        )),
+                        if (_recentTxs.isEmpty) 
+                          const Padding(padding: EdgeInsets.all(40), child: Center(child: Text("No transactions yet"))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
-            const SizedBox(height: 40),
+          ),
+    );
+  }
+
+  void _showExpenseEntry() {
+    final titleController = TextEditingController();
+    final amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Record New Expense"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: titleController, decoration: const InputDecoration(labelText: "Description")),
+            TextField(controller: amountController, decoration: const InputDecoration(labelText: "Amount"), keyboardType: TextInputType.number),
           ],
         ),
-      ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              await ApiService.createExpense({
+                "title": titleController.text,
+                "amount": double.tryParse(amountController.text) ?? 0,
+                "date": DateTime.now().toIso8601String()
+              });
+              Navigator.pop(context);
+              _loadFinanceData();
+            }, 
+            child: const Text("Save Record")
+          )
+        ],
+      )
     );
   }
 
@@ -125,11 +242,11 @@ class AccountantDashboard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _statItem("Today", "\$ 2,450"),
+          _statItem("Today", "₹${_todayCollection.toStringAsFixed(0)}"),
           Container(height: 30, width: 1, color: Colors.white10),
-          _statItem("Month", "\$ 42,9k"),
+          _statItem("Month", "₹${(_monthCollection/1000).toStringAsFixed(1)}k"),
           Container(height: 30, width: 1, color: Colors.white10),
-          _statItem("Dues", "\$ 8,2k"),
+          _statItem("Dues", "₹${(_pendingDues/1000).toStringAsFixed(1)}k"),
         ],
       ),
     );
@@ -172,9 +289,9 @@ class AccountantDashboard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Row(
         children: [

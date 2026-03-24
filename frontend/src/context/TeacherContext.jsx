@@ -1,29 +1,54 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import api from "../utils/api";
 
 const TeacherContext = createContext();
 
 export const TeacherProvider = ({ children }) => {
-  const [teachers, setTeachers] = useState(() => {
-    const saved = localStorage.getItem("teachers");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTeachers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/teachers");
+      setTeachers(response.data || []);
+    } catch (err) {
+      console.error("Teacher fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem("teachers", JSON.stringify(teachers));
-  }, [teachers]);
+    fetchTeachers();
+  }, []);
 
-  const addTeacher = (teacher) => setTeachers(prev => [...prev, { ...teacher, id: Date.now() }]);
-  const updateTeacher = (id, updated) =>
-    setTeachers(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
-  const deleteTeacher = (id) =>
-    setTeachers(prev => prev.filter(t => t.id !== id));
+  const addTeacher = async (teacher) => {
+    try {
+       await api.post("/teachers", teacher);
+       fetchTeachers();
+    } catch (err) { alert("Error adding teacher: " + err.message); }
+  };
+
+  const updateTeacher = async (id, updated) => {
+    try {
+       await api.put(`/teachers/${id}`, updated);
+       fetchTeachers();
+    } catch (err) { alert("Error updating teacher"); }
+  };
+
+  const deleteTeacher = async (id) => {
+    try {
+       await api.delete(`/teachers/${id}`);
+       fetchTeachers();
+    } catch (err) { alert("Error deleting teacher"); }
+  };
 
   return (
-    <TeacherContext.Provider value={{ teachers, addTeacher, updateTeacher, deleteTeacher }}>
+    <TeacherContext.Provider value={{ teachers, addTeacher, updateTeacher, deleteTeacher, loading }}>
       {children}
     </TeacherContext.Provider>
   );
 };
 
-// Custom hook
 export const useTeacher = () => useContext(TeacherContext);

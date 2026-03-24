@@ -17,29 +17,32 @@ import {
   Plus,
   Loader2
 } from "lucide-react";
+import api from "../utils/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
+  const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:5000/api/dashboard/stats", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const data = await response.json();
-        setStats(data);
+        setLoading(true);
+        const [statsRes, noticesRes] = await Promise.all([
+          api.get("/dashboard/stats"),
+          api.get("/notices")
+        ]);
+        setStats(statsRes.data);
+        setNotices(noticesRes.data);
       } catch (err) {
-        console.error("Dashboard stats error:", err);
+        console.error("Dashboard error:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
+    fetchDashboardData();
   }, []);
 
   return (
@@ -98,12 +101,12 @@ export default function Dashboard() {
         {/* MODULES GRID */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           
-          <div onClick={() => navigate('/attendance')} className="cursor-pointer bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm flex flex-col items-center text-center hover:shadow-md transition">
+          <div onClick={() => navigate('/calendar')} className="cursor-pointer bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm flex flex-col items-center text-center hover:shadow-md transition">
             <div className="bg-blue-50 p-3 rounded-2xl mb-4">
               <Calendar className="text-blue-500 w-7 h-7" />
             </div>
-            <h4 className="text-gray-900 font-bold text-[15px]">Attendance</h4>
-            <p className="text-gray-500 text-[11px] mt-1">Check history</p>
+            <h4 className="text-gray-900 font-bold text-[15px]">Calendar</h4>
+            <p className="text-gray-500 text-[11px] mt-1">Events & Holidays</p>
           </div>
           
           <div onClick={() => navigate('/fees')} className="cursor-pointer bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm flex flex-col items-center text-center hover:shadow-md transition">
@@ -160,7 +163,9 @@ export default function Dashboard() {
               <MapPin className="w-3 h-3 mr-1" /> Main Hall • 09:00 AM
             </div>
           </div>
-          <div className="bg-white w-10 h-10 rounded-full flex items-center justify-center relative shadow-sm transition hover:scale-110 cursor-pointer">
+          <div 
+            onClick={() => navigate('/notifications')}
+            className="bg-white w-10 h-10 rounded-full flex items-center justify-center relative shadow-sm transition hover:scale-110 cursor-pointer">
             <Bell className="w-5 h-5 text-[#4f46e5]" />
             <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
           </div>
@@ -173,51 +178,30 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
-          
-          <div className="flex items-center p-4 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-              <Flag className="w-5 h-5 text-red-500" />
-            </div>
-            <div className="ml-4 flex-1">
-              <h4 className="text-gray-900 font-bold text-[15px]">Annual Sports Meet 2024</h4>
-              <p className="text-gray-500 text-[11px] mt-0.5">2 hours ago</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
-
-          <div className="flex items-center p-4 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-              <Users className="w-5 h-5 text-orange-500" />
-            </div>
-            <div className="ml-4 flex-1">
-              <h4 className="text-gray-900 font-bold text-[15px]">Parent-Teacher Meeting</h4>
-              <p className="text-gray-500 text-[11px] mt-0.5">Yesterday</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
-
-          <div className="flex items-center p-4 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <Snowflake className="w-5 h-5 text-blue-500" />
-            </div>
-            <div className="ml-4 flex-1">
-              <h4 className="text-gray-900 font-bold text-[15px]">Winter Vacation Schedule</h4>
-              <p className="text-gray-500 text-[11px] mt-0.5">2 days ago</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
-
-          <div className="flex items-center p-4 hover:bg-gray-50 transition cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-              <Lightbulb className="w-5 h-5 text-green-500" />
-            </div>
-            <div className="ml-4 flex-1">
-              <h4 className="text-gray-900 font-bold text-[15px]">Science Fair Registration</h4>
-              <p className="text-gray-500 text-[11px] mt-0.5">1 week ago</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
-
+          {notices.length > 0 ? (
+            notices.slice(0, 4).map((notice, idx) => (
+              <div key={notice._id || idx} className="flex items-center p-4 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  notice.priority === 'urgent' ? 'bg-red-50' : 
+                  notice.priority === 'high' ? 'bg-orange-50' : 'bg-blue-50'
+                }`}>
+                  <Flag className={`w-5 h-5 ${
+                    notice.priority === 'urgent' ? 'text-red-500' : 
+                    notice.priority === 'high' ? 'text-orange-500' : 'text-blue-500'
+                  }`} />
+                </div>
+                <div className="ml-4 flex-1">
+                  <h4 className="text-gray-900 font-bold text-[15px]">{notice.title}</h4>
+                  <p className="text-gray-500 text-[11px] mt-0.5">
+                    {new Date(notice.createdAt).toLocaleDateString()} • {notice.priority || 'Normal'}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-gray-500 italic">No recent notices</div>
+          )}
         </div>
         
         {/* Floating Action Help Desk Button Mock */}

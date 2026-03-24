@@ -18,6 +18,8 @@ import Reports from "./pages/Reports";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import Signup from "./pages/Signup";
+import Notifications from "./pages/Notifications";
+import CalendarPage from "./pages/CalendarPage";
 
 
 function App() {
@@ -54,6 +56,8 @@ function App() {
               <Route path="communication" element={<Communication />} />
               <Route path="reports" element={<Reports />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="calendar" element={<CalendarPage />} />
             </Route>
 
           </Routes>

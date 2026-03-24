@@ -42,13 +42,7 @@ export default function Navbar() {
         {/* 👤 Profile (only if logged in) */}
         {user && (
           <button
-            onClick={() => {
-              if (user.role === "admin") {
-                navigate("/admin-profile");
-              } else {
-                navigate("/student-profile");
-              }
-            }}
+            onClick={() => navigate("/profile")}
             className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
           >
             <User size={18} />

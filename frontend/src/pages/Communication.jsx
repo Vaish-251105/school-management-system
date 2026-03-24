@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Check, 
   MessageSquare, 
@@ -11,12 +11,27 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import api from "../utils/api";
 
 export default function Communication() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  const [notices, setNotices] = useState([]);
+
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const response = await api.get("/notices");
+        setNotices(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
+    };
+    fetchNotices();
+  }, []);
 
   const initials = user.name ? user.name.split(' ').map(n => n[0]).join('') : "US";
+
 
   return (
     <div className="bg-[#fafafa] min-h-screen font-sans flex flex-col pb-28 text-gray-900">
@@ -93,18 +108,38 @@ export default function Communication() {
             className="text-[#4f46e5] font-medium text-[13px]">View Archive</button>
         </div>
 
-        <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-2xl mb-8 flex items-start gap-4">
-          <div className="bg-[#4f46e5] w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
-            <Megaphone className="text-white w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="font-bold text-gray-900 text-[16px]">Winter Break Schedule</h4>
-            <p className="text-gray-800 text-[13px] mt-1.5 leading-relaxed">The school will remain closed from Dec 20 to Jan 5. Please ensure all library books are returned before the break.</p>
-            <div className="flex items-center gap-1.5 text-gray-500 mt-3 font-medium text-[11px]">
-              <Clock className="w-3.5 h-3.5" /> Posted 2 hours ago
+        <div className="space-y-4 mb-8">
+          {notices.length > 0 ? (
+            notices.map((n) => (
+              <div key={n._id} className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-2xl flex items-start gap-4">
+                <div className="bg-[#4f46e5] w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                  <Megaphone className="text-white w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 text-[16px]">{n.title}</h4>
+                  <p className="text-gray-800 text-[13px] mt-1.5 leading-relaxed">{n.content}</p>
+                  <div className="flex items-center gap-1.5 text-gray-500 mt-3 font-medium text-[11px]">
+                    <Clock className="w-3.5 h-3.5" /> Posted {new Date(n.createdAt).toLocaleDateString()} by {n.senderId?.name || "Admin"}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-2xl mb-8 flex items-start gap-4">
+              <div className="bg-[#4f46e5] w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                <Megaphone className="text-white w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900 text-[16px]">Winter Break Schedule</h4>
+                <p className="text-gray-800 text-[13px] mt-1.5 leading-relaxed">The school will remain closed from Dec 20 to Jan 5. Please ensure all library books are returned before the break.</p>
+                <div className="flex items-center gap-1.5 text-gray-500 mt-3 font-medium text-[11px]">
+                  <Clock className="w-3.5 h-3.5" /> Posted 2 hours ago
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
+
 
         {/* INSTRUCTORS */}
         <div className="flex justify-between items-end mb-4">

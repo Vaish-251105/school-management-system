@@ -17,7 +17,16 @@ class ExamsScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(onPressed: () => Navigator.pop(context), icon: Icon(LucideIcons.chevronLeft, color: isDark ? Colors.white : AppColors.textDark)),
         title: Text("Exam Results", style: TextStyle(color: isDark ? Colors.white : AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 18)),
-        actions: [IconButton(onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Report download started!"))), icon: const Icon(LucideIcons.download, color: AppColors.primary))],
+      actions: [
+        IconButton(
+          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Downloading report..."))),
+          icon: const Icon(LucideIcons.download, color: AppColors.primary)
+        ),
+        IconButton(
+          onPressed: () => _viewReportCard(),
+          icon: const Icon(LucideIcons.fileText, color: AppColors.primary)
+        )
+      ],
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -176,11 +185,101 @@ class ExamsScreen extends StatelessWidget {
     );
   }
 
-  Widget _termButton() {
+  void _viewReportCard() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(children: [Icon(LucideIcons.fileText), SizedBox(width: 8), Text("Report Card")]),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              _reportCardItem("Mathematics", "85/100", "A", Colors.blue),
+              _reportCardItem("Science", "92/100", "A+", Colors.green),
+              _reportCardItem("English", "78/100", "B+", Colors.orange),
+              _reportCardItem("History", "88/100", "A", Colors.blue),
+              _reportCardItem("Computer Science", "95/100", "A+", Colors.green),
+              _reportCardItem("Arts & Crafts", "82/100", "B", Colors.orange),
+              const Divider(height: 20),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text("Overall GPA: 3.85 / 4.0", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text("Percentage: 89.4%", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text("Rank: 4th / 45", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Report card downloaded!"))),
+                    icon: const Icon(LucideIcons.download, size: 16),
+                    label: const Text("Download PDF"),
+                  ),
+                ]),
+              ),
+            ],
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+      ),
+    );
+  }
+
+  Widget _reportCardItem(String subject, String score, String grade, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF5A5FF3), borderRadius: BorderRadius.circular(10)),
-      child: const Row(children: [Icon(LucideIcons.check, color: Colors.white, size: 12), SizedBox(width: 8), Text("Term 2", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))]),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(subject, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(score, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+            ],
+          )),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+            child: Text(grade, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _termButton() {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Switched to $value")),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(color: const Color(0xFF5A5FF3), borderRadius: BorderRadius.circular(10)),
+        child: const Row(children: [Icon(LucideIcons.check, color: Colors.white, size: 12), SizedBox(width: 8), Text("Term 2", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))]),
+      ),
+      itemBuilder: (BuildContext context) => [
+        const PopupMenuItem<String>(
+          value: 'Term 1',
+          child: Text('Term 1'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'Term 2',
+          child: Text('Term 2'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'Final',
+          child: Text('Final Exam'),
+        ),
+      ],
     );
   }
 

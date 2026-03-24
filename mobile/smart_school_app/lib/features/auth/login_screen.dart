@@ -279,11 +279,11 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _socialIcon(LucideIcons.globe, () => _showSocialMsg("Google")),
+                  _socialIcon(LucideIcons.globe, "Google"),
                   const SizedBox(width: 24),
-                  _socialIcon(LucideIcons.facebook, () => _showSocialMsg("Facebook")),
+                  _socialIcon(LucideIcons.facebook, "Facebook"),
                   const SizedBox(width: 24),
-                  _socialIcon(LucideIcons.apple, () => _showSocialMsg("Apple ID")),
+                  _socialIcon(LucideIcons.apple, "Apple ID"),
                 ],
               ),
               const SizedBox(height: 48),
@@ -348,21 +348,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _showSocialMsg(String provider) {
+  void _loginWithSocial(String provider) async {
+    final email = "social_${provider.toLowerCase()}@gmail.com";
+    emailController.text = email;
+    passwordController.text = "123";
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("$provider authentication is coming soon!"),
-        behavior: SnackBarBehavior.floating,
+        content: Text("Authenticating with $provider..."),
+        duration: const Duration(seconds: 1),
         backgroundColor: AppColors.primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
+    
+    // Auto trigger the login method
+    Future.delayed(const Duration(milliseconds: 500), () {
+      login();
+    });
   }
 
-  Widget _socialIcon(IconData icon, VoidCallback onTap) {
+  Widget _socialIcon(IconData icon, String provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => _loginWithSocial(provider),
       child: Container(
         height: 60,
         width: 60,

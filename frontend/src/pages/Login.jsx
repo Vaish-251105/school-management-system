@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Mail, Lock } from "lucide-react";
+import { GraduationCap, Mail, Lock, HelpCircle } from "lucide-react";
 import { FaApple, FaFacebook, FaQuestionCircle } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import api from "../utils/api";
+
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,36 +25,28 @@ export default function Login() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await api.post("/auth/login", { email, password });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Save user data & token
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("currentUser", JSON.stringify(data));
-                // Route to appropriate dashboard based on role
-          if (data.role === "admin") {
-            navigate("/admin-dashboard");
-          } else if (data.role === "teacher") {
-            navigate("/teacher-dashboard");
-          } else if (data.role === "parent") {
-            navigate("/parent-dashboard");
-          } else if (data.role === "accountant") {
-            navigate("/accountant");
-          } else {
-            navigate("/dashboard");
-          }
+      // Save user data & token
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("currentUser", JSON.stringify(data));
+      
+      // Route to appropriate dashboard based on role
+      if (data.role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (data.role === "teacher") {
+        navigate("/teacher-dashboard");
+      } else if (data.role === "parent") {
+        navigate("/parent-dashboard");
+      } else if (data.role === "accountant") {
+        navigate("/accountant");
       } else {
-        alert(data.message || "Login failed");
+        navigate("/dashboard");
       }
     } catch (err) {
       console.error("Login error:", err);
-      alert("Server error. Please check if backend is running.");
+      alert(err.response?.data?.message || "Login failed. Please check your credentials.");
     }
   };
 
@@ -61,11 +55,26 @@ export default function Login() {
       
       {/* Header / Logo */}
       <div className="flex flex-col items-center mb-8">
-        <div className="bg-[#4f46e5] p-4 rounded-2xl shadow-lg mb-4">
-          <GraduationCap className="text-white w-10 h-10" />
+        <div className="bg-white/95 backdrop-blur-md rounded-[40px] p-10 pb-12 shadow-[0_22px_70px_rgba(0,0,0,0.15)] relative overflow-hidden">
+          
+          {/* HELPER MODAL TRIGGER */}
+          <div className="absolute top-6 right-6">
+             <button 
+                onClick={() => alert("DEMO ACCOUNTS (Password: 123 for all)\n\n• Admin: admin@school.com\n• Teacher: teacher@school.com\n• Student: student@school.com\n• Accountant: accountant@school.com\n\nYou can also use ANY email with password '123' to test!")}
+                className="bg-indigo-50 text-indigo-600 p-2.5 rounded-full hover:bg-indigo-100 transition shadow-sm border border-indigo-100 group"
+             >
+                <HelpCircle className="w-5 h-5 group-hover:scale-110 transition" />
+             </button>
+          </div>
+
+          <div className="text-center mb-10">
+            <div className="bg-[#4f46e5] p-4 rounded-2xl shadow-lg mb-4 inline-block">
+              <GraduationCap className="text-white w-10 h-10" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Smart School ERP</h1>
+            <p className="text-gray-500 text-sm">Management System for Modern Education</p>
+          </div>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Smart School ERP</h1>
-        <p className="text-gray-500 text-sm">Management System for Modern Education</p>
       </div>
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
@@ -76,7 +85,11 @@ export default function Login() {
             <button
               key={r.id}
               type="button"
-              onClick={() => setRole(r.id)}
+              onClick={() => {
+                setRole(r.id);
+                setEmail(`${r.id}@school.com`);
+                setPassword("123");
+              }}
               className={`flex-1 min-w-[30%] py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 role === r.id
                   ? "bg-[#4f46e5] text-white shadow-md"
@@ -87,6 +100,12 @@ export default function Login() {
             </button>
           ))}
         </div>
+        <div className="text-center mb-4">
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5 flex items-center justify-center gap-1.5">
+             <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div> CLICK A ROLE FOR FAST LOGIN
+          </p>
+        </div>
+
 
         <form onSubmit={handleLogin}>
           {/* Email */}

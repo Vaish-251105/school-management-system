@@ -11,6 +11,7 @@ import {
   Bell
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import api from "../utils/api";
 
 export default function Staff() {
   const navigate = useNavigate();
@@ -20,12 +21,8 @@ export default function Staff() {
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:5000/api/teachers", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const data = await response.json();
-        setTeachers(Array.isArray(data) ? data : []);
+        const response = await api.get("/teachers");
+        setTeachers(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
         console.error("Fetch staff error:", err);
       } finally {

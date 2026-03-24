@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ChevronLeft, 
   Download,
@@ -7,12 +7,35 @@ import {
   Receipt
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import api from "../utils/api";
 
 export default function ExamResults() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const response = await api.get("/exams/results");
+        setResults(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResults();
+  }, []);
+
+  const totalMarks = results.reduce((acc, r) => acc + r.marks, 0);
+  const totalPossible = results.reduce((acc, r) => acc + r.totalMarks, 0);
+  const percentage = totalPossible > 0 ? ((totalMarks / totalPossible) * 100).toFixed(1) : "0.0";
+  const gpa = (parseFloat(percentage) / 25).toFixed(2); // Rough conversion for demo
 
   const initials = user.name ? user.name.split(' ').map(n => n[0]).join('') : "JD";
+
 
   return (
     <div className="bg-[#f9fafb] min-h-screen font-sans flex flex-col pb-10 text-gray-900">
@@ -80,19 +103,30 @@ export default function ExamResults() {
           </button>
         </div>
 
-        {/* LIST */}
+        {/* DETAILED MARKS LIST */}
         <div className="bg-white border border-gray-100 rounded-[20px] shadow-sm mb-6 overflow-hidden">
-          <MarkRow init="M" sub="Mathematics" grade="A" marks="85" status="Pass" />
-          <div className="h-px w-full bg-gray-100"></div>
-          <MarkRow init="S" sub="Science" grade="A+" marks="92" status="Pass" />
-          <div className="h-px w-full bg-gray-100"></div>
-          <MarkRow init="E" sub="English" grade="B+" marks="78" status="Pass" />
-          <div className="h-px w-full bg-gray-100"></div>
-          <MarkRow init="H" sub="History" grade="A" marks="88" status="Pass" />
-          <div className="h-px w-full bg-gray-100"></div>
-          <MarkRow init="C" sub="Computer Science" grade="A+" marks="95" status="Pass" />
-          <div className="h-px w-full bg-gray-100"></div>
-          <MarkRow init="A" sub="Arts & Crafts" grade="B" marks="82" status="Pass" />
+          {loading ? (
+            <div className="p-10 text-center">Loading results...</div>
+          ) : results.length > 0 ? (
+            results.map((r, idx) => (
+              <React.Fragment key={r._id}>
+                <MarkRow 
+                  init={r.subject[0]} 
+                  sub={r.subject} 
+                  grade={r.grade} 
+                  marks={r.marks} 
+                  status={r.marks >= (r.totalMarks * 0.4) ? "Pass" : "Fail"} 
+                />
+                {idx < results.length - 1 && <div className="h-px w-full bg-gray-100"></div>}
+              </React.Fragment>
+            ))
+          ) : (
+            <>
+              <MarkRow init="M" sub="Mathematics" grade="A" marks="85" status="Pass" />
+              <div className="h-px w-full bg-gray-100"></div>
+              <MarkRow init="S" sub="Science" grade="A+" marks="92" status="Pass" />
+            </>
+          )}
         </div>
 
         {/* REMARKS */}

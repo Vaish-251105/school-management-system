@@ -10,6 +10,7 @@ import {
   Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import api from "../utils/api";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -20,21 +21,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
         const [statsRes, staffRes] = await Promise.all([
-          fetch("http://localhost:5000/api/dashboard/stats", {
-             headers: { "Authorization": `Bearer ${token}` }
-          }),
-          fetch("http://localhost:5000/api/teachers", {
-             headers: { "Authorization": `Bearer ${token}` }
-          })
+          api.get("/dashboard/stats"),
+          api.get("/teachers")
         ]);
         
-        const statsData = await statsRes.json();
-        const staffData = await staffRes.json();
-        
-        setStats(statsData);
-        setStaff(Array.isArray(staffData) ? staffData.slice(0, 3) : []);
+        setStats(statsRes.data);
+        setStaff(Array.isArray(staffRes.data) ? staffRes.data.slice(0, 3) : []);
       } catch (err) {
         console.error("Admin dashboard fetch error:", err);
       } finally {

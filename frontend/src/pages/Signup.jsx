@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, Mail, Lock, User, Briefcase } from "lucide-react";
+import api from "../utils/api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -24,23 +25,13 @@ export default function Signup() {
     setLoading(true);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
-      });
+      const response = await api.post("/auth/register", { name, email, password, role });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Account created successfully! Please login.");
-        navigate("/login");
-      } else {
-        alert(data.message || "Registration failed");
-      }
+      alert("Account created successfully! Please login.");
+      navigate("/login");
     } catch (err) {
       console.error("Signup error:", err);
-      alert("Server error. Please check if backend is running.");
+      alert(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
