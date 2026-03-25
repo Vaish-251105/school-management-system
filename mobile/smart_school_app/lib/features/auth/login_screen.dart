@@ -41,7 +41,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isLoading = true);
 
     try {
-      final result = await ApiService.login(email, password);
+      final role = roles[selectedRole];
+      final result = await ApiService.login(email, password, role: role);
       
       if (result.containsKey('token')) {
         if (!mounted) return;

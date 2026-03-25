@@ -7,10 +7,9 @@ class ApiService {
   static String? customBaseUrl;
 
   static String get baseUrl {
-    if (customBaseUrl != null) return customBaseUrl!;
-    if (kIsWeb) return "https://school-erp-api-z0on.onrender.com/api";
-    if (Platform.isAndroid) return "https://school-erp-api-z0on.onrender.com/api";
-    return "https://school-erp-api-z0on.onrender.com/api";
+    if (customBaseUrl != null && customBaseUrl!.isNotEmpty) return customBaseUrl!;
+    const String prodUrl = "https://school-erp-api-z0on.onrender.com/api";
+    return prodUrl;
   }
 
   static String? _token;
@@ -26,23 +25,30 @@ class ApiService {
 
   static Future<dynamic> get(String endpoint) async {
     try {
+      print("📡 API GET: $baseUrl/$endpoint");
       final response = await http.get(Uri.parse("$baseUrl/$endpoint"), headers: _headers);
+      print("📥 RESPONSE [${response.statusCode}]: ${response.body}");
       return jsonDecode(response.body);
     } catch (e) {
-      return {"error": e.toString()};
+      print("❌ GET ERROR: $e");
+      return {"error": e.toString(), "message": "Connection failure. Ensure backend is active."};
     }
   }
 
   static Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
     try {
+      print("📡 API POST: $baseUrl/$endpoint");
+      print("📤 PAYLOAD: ${jsonEncode(data)}");
       final response = await http.post(
         Uri.parse("$baseUrl/$endpoint"),
         headers: _headers,
         body: jsonEncode(data),
       );
+      print("📥 RESPONSE [${response.statusCode}]: ${response.body}");
       return jsonDecode(response.body);
     } catch (e) {
-      return {"error": e.toString()};
+      print("❌ POST ERROR: $e");
+      return {"error": e.toString(), "message": "System unreachable. Please check internet connection."};
     }
   }
 
@@ -69,8 +75,12 @@ class ApiService {
   }
 
   // AUTH
-  static Future<Map<String, dynamic>> login(String email, String password) async {
-    final data = await post("auth/login", {"email": email, "password": password});
+  static Future<Map<String, dynamic>> login(String email, String password, {String role = "student"}) async {
+    final data = await post("auth/login", {
+      "email": email, 
+      "password": password,
+      "role": role.toLowerCase()
+    });
     if (data is Map<String, dynamic> && data['token'] != null) {
       setToken(data['token']);
     }
