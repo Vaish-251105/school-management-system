@@ -1,99 +1,118 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
   static String? customBaseUrl;
+  
+  static final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 15),
+    receiveTimeout: const Duration(seconds: 15),
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
+  ));
 
   static String get baseUrl {
     if (customBaseUrl != null && customBaseUrl!.isNotEmpty) return customBaseUrl!;
-    const String prodUrl = "https://school-erp-api-z0on.onrender.com/api";
-    return prodUrl;
+    return "https://school-erp-api-z0on.onrender.com/api";
   }
 
   static String? _token;
 
   static void setToken(String token) {
     _token = token;
+    _dio.options.headers["Authorization"] = "Bearer $token";
   }
-
-  static Map<String, String> get _headers => {
-    "Content-Type": "application/json",
-    if (_token != null) "Authorization": "Bearer $_token",
-  };
 
   static Future<dynamic> get(String endpoint) async {
     try {
-      print("📡 API GET: $baseUrl/$endpoint");
-      final response = await http.get(Uri.parse("$baseUrl/$endpoint"), headers: _headers);
-      print("📥 RESPONSE [${response.statusCode}]: ${response.body}");
-      return jsonDecode(response.body);
-    } catch (e) {
-      print("❌ GET ERROR: $e");
-      return {"error": e.toString(), "message": "Connection failure. Ensure backend is active."};
+      print("📡 DIO GET: $baseUrl/$endpoint");
+      final response = await _dio.get("$baseUrl/$endpoint");
+      print("📥 DIO RESPONSE [${response.statusCode}]");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ DIO GET ERROR: ${e.message}");
+      return {"error": e.message, "message": _getErrorMessage(e)};
     }
   }
 
   static Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
     try {
-      print("📡 API POST: $baseUrl/$endpoint");
+      print("📡 DIO POST: $baseUrl/$endpoint");
       print("📤 PAYLOAD: ${jsonEncode(data)}");
-      final response = await http.post(
-        Uri.parse("$baseUrl/$endpoint"),
-        headers: _headers,
-        body: jsonEncode(data),
-      );
-      print("📥 RESPONSE [${response.statusCode}]: ${response.body}");
-      return jsonDecode(response.body);
-    } catch (e) {
-      print("❌ POST ERROR: $e");
-      return {"error": e.toString(), "message": "System unreachable. Please check internet connection."};
+      final response = await _dio.post("$baseUrl/$endpoint", data: data);
+      print("📥 DIO RESPONSE [${response.statusCode}]: ${response.data}");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ DIO POST ERROR: ${e.message} | Data: ${e.response?.data}");
+      return {
+        "error": e.message, 
+        "message": _getErrorMessage(e),
+        "details": e.response?.data
+      };
     }
+  }
+
+  static String _getErrorMessage(DioException e) {
+    if (e.type == DioExceptionType.connectionTimeout) return "Connection timeout. Server might be sleeping.";
+    if (e.type == DioExceptionType.receiveTimeout) return "Server response timeout.";
+    if (e.type == DioExceptionType.connectionError) return "Cannot reach server. Check internet.";
+    if (e.response != null) {
+      final msg = e.response?.data?['message'];
+      if (msg != null) return msg.toString();
+      return "Server error: ${e.response?.statusCode}";
+    }
+    return "Network error occurred.";
   }
 
   static Future<dynamic> put(String endpoint, Map<String, dynamic> data) async {
     try {
-      final response = await http.put(
-        Uri.parse("$baseUrl/$endpoint"),
-        headers: _headers,
-        body: jsonEncode(data),
-      );
-      return jsonDecode(response.body);
-    } catch (e) {
-      return {"error": e.toString()};
+      final response = await _dio.put("$baseUrl/$endpoint", data: data);
+      return response.data;
+    } on DioException catch (e) {
+      return {"error": e.message, "message": _getErrorMessage(e)};
     }
   }
 
   static Future<dynamic> delete(String endpoint) async {
     try {
-      final response = await http.delete(Uri.parse("$baseUrl/$endpoint"), headers: _headers);
-      return jsonDecode(response.body);
-    } catch (e) {
-      return {"error": e.toString()};
+      final response = await _dio.delete("$baseUrl/$endpoint");
+      return response.data;
+    } on DioException catch (e) {
+      return {"error": e.message, "message": _getErrorMessage(e)};
     }
   }
 
   // AUTH
   static Future<Map<String, dynamic>> login(String email, String password, {String role = "student"}) async {
-    final data = await post("auth/login", {
+    final res = await post("auth/login", {
       "email": email, 
-      "password": password,
+      "password": password, 
       "role": role.toLowerCase()
     });
-    if (data is Map<String, dynamic> && data['token'] != null) {
-      setToken(data['token']);
+    
+    if (res is Map<String, dynamic> && res['token'] != null) {
+      setToken(res['token']);
+      return res;
     }
-    return data;
+    
+    // If res is error map from catch, return it
+    if (res is Map<String, dynamic>) return res;
+    return {"error": "Invalid response from server"};
   }
 
   static Future<Map<String, dynamic>> register(String name, String email, String password, String role) async {
-    return await post("auth/register", {
+    final res = await post("auth/register", {
       "name": name,
       "email": email,
       "password": password,
       "role": role.toLowerCase(),
     });
+    if (res is Map<String, dynamic>) return res;
+    return {"error": "Invalid response from server"};
   }
 
   // DASHBOARD
