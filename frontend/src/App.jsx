@@ -21,7 +21,7 @@ import Signup from "./pages/Signup";
 import Notifications from "./pages/Notifications";
 import CalendarPage from "./pages/CalendarPage";
 import StaffAttendance from "./pages/StaffAttendance";
-import ExamSchedule from "./pages/ExamSchedule";
+import Timetable from "./pages/Timetable";
 import Transport from "./pages/Transport";
 import Salaries from "./pages/Salaries";
 
@@ -64,7 +64,7 @@ function App() {
               <Route path="notifications" element={<Notifications />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="staff-attendance" element={<StaffAttendance />} />
-              <Route path="exams-schedule" element={<ExamSchedule />} />
+              <Route path="timetable" element={<Timetable />} />
               <Route path="transport" element={<Transport />} />
               <Route path="salaries" element={<Salaries />} />
             </Route>

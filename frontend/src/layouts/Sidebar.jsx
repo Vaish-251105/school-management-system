@@ -39,6 +39,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       { path: "/attendance", icon: <ClipboardList size={20} />, label: "Live Presence" },
       { path: "/fees", icon: <CreditCard size={20} />, label: "Financials" },
       { path: "/exams", icon: <BarChart3 size={20} />, label: "Result Stats" },
+      { path: "/timetable", icon: <CalendarDays size={20} />, label: "Class Agenda" },
       { path: "/reports", icon: <FileText size={20} />, label: "Reports" },
       { path: "/communication", icon: <MessageSquare size={20} />, label: "Global Sync" },
       { path: "/transport", icon: <Bus size={20} />, label: "Fleet Log" },
@@ -49,6 +50,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       { path: "/attendance", icon: <ClipboardList size={20} />, label: "Daily Log" },
       { path: "/homework", icon: <Briefcase size={20} />, label: "Assignments" },
       { path: "/exams", icon: <BarChart3 size={20} />, label: "Grading" },
+      { path: "/timetable", icon: <CalendarDays size={20} />, label: "Agenda" },
       { path: "/communication", icon: <MessageSquare size={20} />, label: "Notices" },
       { path: "/calendar", icon: <CalendarDays size={20} />, label: "Schedule" },
     ],
@@ -58,6 +60,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       { path: "/attendance", icon: <ClipboardList size={20} />, label: "Presence" },
       { path: "/homework", icon: <Briefcase size={20} />, label: "Assignments" },
       { path: "/exams", icon: <BarChart3 size={20} />, label: "Results" },
+      { path: "/timetable", icon: <CalendarDays size={20} />, label: "Agenda" },
       { path: "/communication", icon: <MessageSquare size={20} />, label: "Faculty Chat" },
       { path: "/transport", icon: <Bus size={20} />, label: "Bus Route" },
     ],
@@ -149,7 +152,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
               </div>
               <div className="flex items-center gap-4 relative z-10">
                  <div className="w-12 h-12 bg-blue-600 rounded-[16px] flex items-center justify-center font-black text-white text-lg border-4 border-[#1e1b4b] shadow-xl">
-                   {user?.name?.[0] || "U"}
+                    {user?.name?.[0] || "U"}
                  </div>
                  <div className="flex-1 truncate">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white leading-none truncate">{user?.name || "Member"}</p>

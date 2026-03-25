@@ -98,6 +98,7 @@ export default function Dashboard() {
   const modules = [
     { id: 'attendance', title: 'Attendance', sub: 'Daily Logs', icon: <ClipboardList className="w-7 h-7" />, color: 'emerald', path: '/attendance', roles: ['admin', 'teacher', 'student', 'parent'] },
     { id: 'fees', title: 'Fees Panel', sub: 'Payments', icon: <Wallet className="w-7 h-7" />, color: 'indigo', path: '/fees', roles: ['admin', 'parent', 'accountant'] },
+    { id: 'timetable', title: 'Timetable', sub: 'Class Agenda', icon: <CalendarClock className="w-7 h-7" />, color: 'blue', path: '/timetable', roles: ['admin', 'teacher', 'student'] },
     { id: 'homework', title: role === 'teacher' ? 'Assignments' : 'Homework', sub: role === 'teacher' ? 'Upload' : 'Records', icon: <PenTool className="w-7 h-7" />, color: 'rose', path: '/homework', roles: ['admin', 'teacher', 'student'] },
     { id: 'exams', title: 'Exam Results', sub: 'Transcripts', icon: <Award className="w-7 h-7" />, color: 'amber', path: '/exams', roles: ['admin', 'teacher', 'student', 'parent'] },
     { id: 'communication', title: 'Messaging', sub: 'Direct Inmate', icon: <MessageSquare className="w-7 h-7" />, color: 'sky', path: '/communication', roles: ['admin', 'teacher', 'student'] },

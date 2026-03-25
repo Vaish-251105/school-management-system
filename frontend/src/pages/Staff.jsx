@@ -60,11 +60,18 @@ export default function Staff() {
     }
   };
 
-  const filtered = teachers.filter(t => 
-    t.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = teachers.filter(t => {
+    const searchLower = searchTerm.toLowerCase();
+    const name = (t.userId?.name || "").toLowerCase();
+    const email = (t.userId?.email || "").toLowerCase();
+    const dept = (t.department || "").toLowerCase();
+    const role = (t.designation || t.userId?.role || "").toLowerCase();
+    
+    return name.includes(searchLower) || 
+           email.includes(searchLower) || 
+           dept.includes(searchLower) ||
+           role.includes(searchLower);
+  });
 
   return (
     <div className="bg-[#fafafa] min-h-screen pb-32 font-sans transition-all">

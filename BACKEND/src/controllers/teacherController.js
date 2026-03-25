@@ -26,19 +26,27 @@ export const getTeachers = asyncHandler(async (req, res) => {
 export const getStaff = asyncHandler(async (req, res) => {
   try {
     let teachers = await Teacher.find().populate('userId', 'name email role').lean();
-    // Filter out if userId population failed
     teachers = teachers.filter(t => t.userId);
     
-    const users = await User.find({ role: { $in: ['accountant', 'admin'] } }).lean();
+    // Find all users that might be staff
+    const staffUsers = await User.find({ role: { $in: ['admin', 'accountant', 'teacher'] } }).lean();
     
-    const otherStaff = users.map(u => ({
-      userId: u,
-      subject: u.role === 'admin' ? 'Administration' : 'Finance',
-      _id: u._id,
-      isUserOnly: true
-    }));
+    const consolidated = staffUsers.map(u => {
+      // Find if this user already has a teacher profile
+      const t = teachers.find(teacher => teacher.userId?._id?.toString() === u._id.toString() || teacher.userId === u._id.toString());
+      if (t) {
+        return { ...t, userId: u }; // Merge full user details
+      }
+      return {
+        userId: u,
+        designation: u.role === 'admin' ? 'Super Admin' : (u.role === 'accountant' ? 'Financial Officer' : 'Staff'),
+        department: u.role === 'admin' ? 'Administration' : 'General',
+        _id: u._id,
+        isUserOnly: true
+      };
+    });
 
-    res.json([...teachers, ...otherStaff]);
+    res.json(consolidated);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
