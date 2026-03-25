@@ -23,6 +23,8 @@ The backend is a Node/Express server.
 
 **Once deployed, copy your Backend URL (e.g., `https://school-api.onrender.com`).**
 
+**Current Backend URL: [https://school-erp-api-z0on.onrender.com](https://school-erp-api-z0on.onrender.com)**
+
 ---
 
 ## 2. Frontend Deployment (Vercel)
@@ -45,7 +47,7 @@ To connect your mobile app to the deployed production system:
 1.  Open `mobile/smart_school_app/lib/services/api_service.dart`.
 2.  Update `customBaseUrl` on Line 8:
     ```dart
-    static String? customBaseUrl = "https://your-backend-url.onrender.com/api";
+    static String? customBaseUrl = "https://school-erp-api-z0on.onrender.com/api";
     ```
 3.  Rebuild your APK: `flutter build apk`.
 

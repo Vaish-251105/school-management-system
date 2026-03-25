@@ -27,10 +27,13 @@ The system supports the following roles:
 
 Each role has **custom dashboards and permissions**.
 
----
-https://school-management-system-fk0o.onrender.com
+## 🌎 Live Deployment
 
-## ✨ Features
+*   **Backend API**: [https://school-erp-api-z0on.onrender.com](https://school-erp-api-z0on.onrender.com)
+*   **Mobile App (APK)**: [Download v2.0](https://github.com/Vaish-251105/school-management-system/raw/main/releases/school-mobile-app.apk)
+*   **Frontend (Web)**: Deploying on Vercel...
+
+---
 
 ### 🔐 Authentication & Authorization
 
