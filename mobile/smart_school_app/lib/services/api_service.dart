@@ -8,9 +8,9 @@ class ApiService {
 
   static String get baseUrl {
     if (customBaseUrl != null) return customBaseUrl!;
-    if (kIsWeb) return "http://localhost:5000/api";
-    if (Platform.isAndroid) return "http://192.168.31.211:5000/api";
-    return "http://localhost:5000/api";
+    if (kIsWeb) return "https://school-management-system-backend-zzik.onrender.com/api";
+    if (Platform.isAndroid) return "https://school-management-system-backend-zzik.onrender.com/api";
+    return "https://school-management-system-backend-zzik.onrender.com/api";
   }
 
   static String? _token;
