@@ -31,7 +31,7 @@ Each role has **custom dashboards and permissions**.
 
 *   **Backend API**: [https://school-erp-api-z0on.onrender.com](https://school-erp-api-z0on.onrender.com)
 *   **Mobile App (APK)**: [Download v2.0](https://github.com/Vaish-251105/school-management-system/raw/main/releases/school-mobile-app.apk)
-*   **Frontend (Web)**: Deploying on Vercel...
+*   **Frontend (Web)**: [https://school-management-system-wumq.vercel.app](https://school-management-system-wumq.vercel.app)
 
 ---
 
